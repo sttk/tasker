@@ -6,4 +6,5 @@ node_js:
   - "stable"
 script:
   - gulp test --js=tests/create_and_get.js
+  - gulp test --js=tests/entry.js
   - gulp test --js=tests/latest.js
