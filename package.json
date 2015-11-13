@@ -1,0 +1,33 @@
+{
+  "name": "tasker",
+  "version": "0.0.1",
+  "description": "A sample program of a task registry.",
+  "main": "index.js",
+  "scripts": {
+    "test": "gulp test --js=tests/lastest.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sttk/tasker.git"
+  },
+  "keywords": [
+    "task"
+  ],
+  "author": "Takayuki Sato",
+  "engines": {
+    "node": ">= 0.9"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sttk/tasker/issues"
+  },
+  "homepage": "https://github.com/sttk/tasker#readme",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-jshint": "^1.12.0",
+    "gulp-showhelp": "^1.0.3",
+    "gulp-tarte-jsunit": "^0.2.1",
+    "jshint-stylish": "^2.0.1",
+    "map-stream": "0.0.6"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "eqnull"   : true,
+  "supernew" : true,
+  "newcap"   : false,
+  "noempty"  : false,
+  "undef"    : true,
+  "browser"  : true,
+  "node"     : true,
+
+  "globals"  : {
+    "testsuite" : false
+  }
+}
