@@ -1,4 +1,3 @@
 'use strict';
-var Tasker = require('./lib/tree.js');
-var Task = require('./lib/listing.js');
+var Tasker = require('./lib/forwardref.js');
 module.exports = Tasker;

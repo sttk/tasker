@@ -12,6 +12,7 @@ The product improved in following stages.
 2. [Entry a task with its content.](#entry)
 3. [Make a tree structure of tasks.](#tree)
 4. [List children and descendants.](#listing)
+5. [Support forward referece.](#forwardref)
 
 ---
 
@@ -106,6 +107,7 @@ try {
 
 ```js
 var Tasker = require('lib/tree.js');
+var Task = require('lib/listing.js');
 var assert = require('assert');
 
 var tasker = new Tasker();
@@ -149,7 +151,7 @@ console.log(s);
 //     Task #2 [0/2,2]
 //     Task #3 [1/2,2]
 
-s = tasker.get('task-7').displayName;
+s = tasker.get('task-7').displayName + '\n';
 var fn = function(each, depth, indent) {
   var task = each.element;
   s += indent + ' |\n';
@@ -173,6 +175,34 @@ console.log(s);
 //     +-Task #2
 //     |
 //     +-Task #3
+```
+### <a name="forwardref"></a> Support forward referece.
+
+```js
+var Tasker = require('./lib/forwardref.js');
+var assert = require('assert');
+
+var task0 = tasker.entry('task-0', ['task-1'], 'Task #0');
+var task1 = tasker.get('task-1');
+this.equal(task0.name, 'task-0');
+this.equal(task0.displayName, 'Task #0');
+this.equal(task0._childs.length, 1);
+this.equal(task0._childs[0], task1);
+this.equal(task1._undefined, 'task-1');
+this.equal(task1._childs, undefined);
+this.equal(tasker._needed['task-0'], undefined);
+this.equal(tasker._needed['task-1'], task1);
+
+var newTask = tasker.entry('task-1', [], 'Task #1');
+this.equal(task1, newTask);
+this.equal(task1.name, 'task-1');
+this.equal(task1.displayName, 'Task #1');
+this.equal(task0._childs.length, 1);
+this.equal(task0._childs[0], task1);
+this.equal(task1._undefined, undefined);
+this.equal(task1._childs.length, 0);
+this.equal(tasker._needed['task-0'], undefined);
+this.equal(tasker._needed['task-1'], undefined);
 ```
 
 ## License

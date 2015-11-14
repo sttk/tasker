@@ -1,8 +1,7 @@
 'use strict';
 
 var path = require('path');
-var Tasker = require(path.resolve('./lib/tree.js'));
-var Task = require(path.resolve('./lib/listing.js'));
+var Tasker = require(path.resolve('./lib/listing.js'));
 
 var logs = [];
 
