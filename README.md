@@ -11,6 +11,7 @@ The product improved in following stages.
 1. [Create and get tasks.](#create_and_get)
 2. [Entry a task with its content.](#entry)
 3. [Make a tree structure of tasks.](#tree)
+4. [List children and descendants.](#listing)
 
 ---
 
@@ -99,6 +100,79 @@ try {
   assert.equal(tasker.get('task-3'), null);
   assert.equal(tasker.get('task-4'), null);
 }
+```
+
+## <a name="listing"></a>List children and descendants.
+
+```js
+var Tasker = require('lib/tree.js');
+var assert = require('assert');
+
+var tasker = new Tasker();
+tasker.onEntry = function(name, task, disp) {
+  task.name = name;
+  task.displayName = (disp) ? disp.toString() : name;
+};
+
+tasker.entry('task-0', null, 'Task #0');
+tasker.entry('task-1', null, 'Task #1');
+tasker.entry('task-2', null, 'Task #2');
+tasker.entry('task-3', null, 'Task #3');
+tasker.entry('task-4', null, 'Task #4');
+tasker.entry('task-5', ['task-2', 'task-3'], 'Task #5 <#2,#3>');
+tasker.entry('task-6', ['task-4'], 'Task #6 <#4>');
+tasker.entry('task-7', ['task-0', 'task-6', 'task-5'], 'Task #7 <#0,#6,#5>');
+
+var s = '';
+tasker.get('task-7').forEachChild(function(each, a, b) {
+  s += each.element.name + '[' + each.index + '/' + each.count + ']:';
+  s += a + ':' + b + '\n';
+}, 'A', 'B');
+console.log(s);
+// The above code displays as follows:
+// task-0[0/3]:A:B
+// task-6[1/3]:A:B
+// task-5[2/3]:A:B
+
+s = tasker.get('task-7').displayName + '\n';
+tasker.get('task-7').forEachDescendant(function(each) {
+  s += '  '.repeat(each.depth) + each.element.displayName;
+  s += ' [' + each.index + '/' + each.count + ',' + each.depth + ']\n';
+});
+console.log(s);
+// The above code displays as follows:
+// Task #7 <#0,#6,#5>
+//   Task #0 [0/3,1]
+//   Task #6 <#4> [1/3,1]
+//     Task #4 [0/1,2]
+//   Task #5 <#2,#3> [2/3,1]
+//     Task #2 [0/2,2]
+//     Task #3 [1/2,2]
+
+s = tasker.get('task-7').displayName;
+var fn = function(each, depth, indent) {
+  var task = each.element;
+  s += indent + ' |\n';
+  s += indent + ' +-' + task.displayName + '\n';
+  indent += (each.index === each.count - 1) ? '   ' : ' | ';
+  task.forEachChild(fn, depth + 1, indent);
+};
+tasker.get('task-7').forEachChild(fn, 0, '');
+console.log(s);
+// The above code displays as follows:
+// Task #7 <#0,#6,#5>
+//  |
+//  +-Task #0
+//  |
+//  +-Task #6 <#4>
+//  |  |
+//  |  +-Task #4
+//  |
+//  +-Task #5 <#2,#3>
+//     |
+//     +-Task #2
+//     |
+//     +-Task #3
 ```
 
 ## License

@@ -1,2 +1,4 @@
 'use strict';
-module.exports = require('./lib/tree.js');
+var Tasker = require('./lib/tree.js');
+var Task = require('./lib/listing.js');
+module.exports = Tasker;
