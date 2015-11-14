@@ -7,4 +7,5 @@ node_js:
 script:
   - gulp test --js=tests/create_and_get.js
   - gulp test --js=tests/entry.js
+  - gulp test --js=tests/tree.js
   - gulp test --js=tests/latest.js

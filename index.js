@@ -1,2 +1,2 @@
 'use strict';
-module.exports = require('./lib/entry.js');
+module.exports = require('./lib/tree.js');

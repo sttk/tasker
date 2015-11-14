@@ -5,14 +5,18 @@
 
 A sample program of a task registry.
 
+In this branch, the project adopts incremental development.
+The product improved in following stages.
+
 1. [Create and get tasks.](#create_and_get)
 2. [Entry a task with its content.](#entry)
+3. [Make a tree structure of tasks.](#tree)
 
 ---
 
 ## <a name="create_and_get"></a>Create and get tasks.
 
-<div class="highlight highlight-source-js"><pre>
+```js
 var Tasker = require('lib/create_and_get.js');
 var assert = require('assert');
 
@@ -20,14 +24,15 @@ var tasker = new Tasker();
 var task0 = tasker.create('task-0');
 assert.strictEqual(tasker.get('task-0'), task0);
 
+// Returns a same task object by a same name.
 var task00 = tasker.create('task-0');
 assert.strictEqual(tasker.get('task-0'), task00);
 assert.strictEqual(task0, task00);
-</pre></div>
+```
 
 ## <a name="entry"></a>Entry a task with its content.
 
-<div class="highlight highlight-source-js"><pre>
+```js
 var Tasker = require('lib/entry.js');
 var assert = require('assert');
 
@@ -44,10 +49,57 @@ var task1 = tasker.entry('task-1');
 assert.strictEqual(task1, tasker.get('task-1'));
 assert.equal(task1.num, 0);
 
+// Returns a same task by a same name and it is updated with new content.
 var task11 = tasker.entry('task-1', 999);
 assert.strictEqual(task1, task11);
 assert.equal(task1.num, 999);
-</pre></div>
+```
+
+## <a name="tree"></a>Make a tree structure of tasks
+
+```js
+var Tasker = require('lib/tree.js');
+var assert = require('assert');
+
+var tasker = new Tasker();
+tasker.onEntry = function(name, task, disp) {
+  task.name = name;
+  task.displayName = (disp) ? disp.toString() : name;
+};
+
+var task0 = tasker.entry('task-0', null, 'Task #0');
+assert.strictEqual(task0, tasker.get('task-0'));
+assert.equal(task0.displayName, 'Task #0');
+assert.equal(task0._childs.length, 0);
+
+var task1 = tasker.entry('task-1', []);
+assert.strictEqual(task1, tasker.get('task-1'));
+assert.equal(task1.displayName, 'task-1');
+assert.equal(task1._childs.length, 0);
+
+var task2 = tasker.entry('task-2', ['task-1', 'task-0'], 'Task #2');
+assert.strictEqual(task2, tasker.get('task-2'));
+assert.equal(task2.displayName, 'Task #2');
+assert.equal(task2._childs.length, 2);
+assert.equal(task2._childs[0], task1);
+assert.equal(task2._childs[1], task0);
+
+// Returns a same task by a same name and it is updated with new content.
+var task22 = tasker.entry('task-2', [], 'Task #22');
+assert.strictEqual(task2, task22);
+assert.equal(task2.displayName, 'Task #22');
+assert.equal(task2._childs.length, 0);
+
+// Throws an error if a non-existent task name is specified as a child.
+var task3;
+try {
+  task3 = tasker.entry('task-3', ['task-4'], 'Task #3');
+  assert.fail();
+} catch (e) {
+  assert.equal(tasker.get('task-3'), null);
+  assert.equal(tasker.get('task-4'), null);
+}
+```
 
 ## License
 
