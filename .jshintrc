@@ -6,6 +6,7 @@
   "undef"    : true,
   "browser"  : true,
   "node"     : true,
+  "expr"     : true,
 
   "globals"  : {
     "testsuite" : false
