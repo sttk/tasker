@@ -6,6 +6,7 @@ var jshint = require('gulp-jshint');
 var stylish = require('jshint-stylish');
 var mapstream = require('map-stream');
 var jsunit = require('gulp-tarte-jsunit');
+var process = require('process');
 
 gulp.task('default', [ 'help' ]);
 
@@ -52,7 +53,8 @@ gulp.task('test', [ 'lint', 'lint-for-test' ], function(done) {
     console.log("!ERROR: The option 'js' should be specified js path.");
     return;
   }
-  jsunit.run(js, done);
+  var exit = function() { process.exit(1); }
+  jsunit.run(js, {pass:done, fail:exit, rterr:exit, pgerr:exit});
 }).help = {
   '': 'runs a js code for test.',
   '--js=file': 'specifys a js path containing a unit test code.',
