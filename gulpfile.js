@@ -6,7 +6,6 @@ var jshint = require('gulp-jshint');
 var stylish = require('jshint-stylish');
 var mapstream = require('map-stream');
 var jsunit = require('gulp-tarte-jsunit');
-var process = require('process');
 
 gulp.task('default', [ 'help' ]);
 
