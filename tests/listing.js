@@ -45,7 +45,8 @@ testsuite('Tasker - A task registry', function() {
       run: function() {
         var s = this.tasker.get('task-7').displayName + '\n';
         this.tasker.get('task-7').forEachDescendant(function(each) {
-          s += '  '.repeat(each.depth) + each.element.displayName;
+          for (var i=0, n=each.depth; i<n; i++) { s += '  '; }
+          s += each.element.displayName;
           s += ' [' + each.index + '/' + each.count + ',' + each.depth + ']\n';
         });
         this.equal(s,
