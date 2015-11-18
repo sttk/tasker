@@ -13,11 +13,11 @@ testsuite('Tasker - A task registry', function() {
 'taskA1\n' +
 '├─taskA0 (8)\n' +
 '└─taskB1 (_load_b.js)\n' +
-'　├─task0 <undefined>\n' +
+'　├─taskC0 <undefined>\n' +
 '　└─taskB0 (_load_b.js:6)\n' +
 'taskB0 (_load_b.js:10)\n' +
 'taskB1 (_load_b.js)\n' +
-'├─task0 <undefined>\n' +
+'├─taskC0 <undefined>\n' +
 '└─taskB0 (_load_b.js:6)\n' +
 '');
     }
