@@ -5,9 +5,4 @@ node_js:
   - "0.12"
   - "stable"
 script:
-  - gulp test --js=tests/create_and_get.js
-  - gulp test --js=tests/entry.js
-  - gulp test --js=tests/tree.js
-  - gulp test --js=tests/listing.js
-  - gulp test --js=tests/forwardref.js
   - gulp test --js=tests/latest.js

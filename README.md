@@ -13,13 +13,14 @@ The product improved in following stages.
 3. [Make a tree structure of tasks.](#tree)
 4. [List children and descendants.](#listing)
 5. [Support forward referece.](#forwardref)
+6. [Merge multiple js files.](#load)
 
 ---
 
 ## <a name="create_and_get"></a>Create and get tasks.
 
 ```js
-var Tasker = require('lib/create_and_get.js');
+var Tasker = require('./lib/create_and_get.js');
 var assert = require('assert');
 
 var tasker = new Tasker();
@@ -35,7 +36,7 @@ assert.strictEqual(task0, task00);
 ## <a name="entry"></a>Entry a task with its content.
 
 ```js
-var Tasker = require('lib/entry.js');
+var Tasker = require('./lib/entry.js');
 var assert = require('assert');
 
 var tasker = new Tasker();
@@ -60,7 +61,7 @@ assert.equal(task1.num, 999);
 ## <a name="tree"></a>Make a tree structure of tasks
 
 ```js
-var Tasker = require('lib/tree.js');
+var Tasker = require('./lib/tree.js');
 var assert = require('assert');
 
 var tasker = new Tasker();
@@ -106,8 +107,8 @@ try {
 ## <a name="listing"></a>List children and descendants.
 
 ```js
-var Tasker = require('lib/tree.js');
-var Task = require('lib/listing.js');
+var Tasker = require('./lib/tree.js');
+var Task = require('./lib/listing.js');
 var assert = require('assert');
 
 var tasker = new Tasker();
@@ -184,25 +185,63 @@ var assert = require('assert');
 
 var task0 = tasker.entry('task-0', ['task-1'], 'Task #0');
 var task1 = tasker.get('task-1');
-this.equal(task0.name, 'task-0');
-this.equal(task0.displayName, 'Task #0');
-this.equal(task0._childs.length, 1);
-this.equal(task0._childs[0], task1);
-this.equal(task1._undefined, 'task-1');
-this.equal(task1._childs, undefined);
-this.equal(tasker._needed['task-0'], undefined);
-this.equal(tasker._needed['task-1'], task1);
+assert.equal(task0.name, 'task-0');
+assert.equal(task0.displayName, 'Task #0');
+assert.equal(task0._childs.length, 1);
+assert.equal(task0._childs[0], task1);
+assert.equal(task1._undefined, 'task-1');
+assert.equal(task1._childs, undefined);
+assert.equal(tasker._needed['task-0'], undefined);
+assert.equal(tasker._needed['task-1'], task1);
 
 var newTask = tasker.entry('task-1', [], 'Task #1');
-this.equal(task1, newTask);
-this.equal(task1.name, 'task-1');
-this.equal(task1.displayName, 'Task #1');
-this.equal(task0._childs.length, 1);
-this.equal(task0._childs[0], task1);
-this.equal(task1._undefined, undefined);
-this.equal(task1._childs.length, 0);
-this.equal(tasker._needed['task-0'], undefined);
-this.equal(tasker._needed['task-1'], undefined);
+assert.equal(task1, newTask);
+assert.equal(task1.name, 'task-1');
+assert.equal(task1.displayName, 'Task #1');
+assert.equal(task0._childs.length, 1);
+assert.equal(task0._childs[0], task1);
+assert.equal(task1._undefined, undefined);
+assert.equal(task1._childs.length, 0);
+assert.equal(tasker._needed['task-0'], undefined);
+assert.equal(tasker._needed['task-1'], undefined);
+```
+
+### <a name="load"></a>Merge multiple js files.
+
+```js
+// ./tests/_load_a.js
+var tasker = require('./lib/load_ex.js');
+tasker.entry('taskA0', []);
+tasker.entry('taskA0', []);
+tasker.entry('taskA1', ['taskA0', 'taskB1']);
+tasker.load('./tests/_load_b.js');
+tasker.entry('taskA0', []);
+```
+
+```js
+// test_b.js
+var tasker = require('./lib/load_ex.js');
+tasker.entry('taskB0');
+tasker.entry('taskB1', ['taskC0', 'taskB0']);
+tasker.entry('taskB0');
+```
+
+```js
+var tasker = require('./lib/load_ex.js');
+var tasker.load('./tests/_load_a.js');
+tasker.tree();
+
+// The above code displays as follows:
+// taskA0 (7)
+// taskA1
+// ├─taskA0 (4)
+// └─taskB1 (_load_b.js)
+// 　├─taskC0 <undefined>
+// 　└─taskB0 (_load_b.js:3)
+// taskB0 (_load_b.js:5)
+// taskB1 (_load_b.js)
+// ├─taskC0 <undefined>
+// └─taskB0 (_load_b.js:3)
 ```
 
 ## License

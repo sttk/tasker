@@ -1,3 +1,3 @@
 'use strict';
-var Tasker = require('./lib/forwardref.js');
+var Tasker = require('./tests/_load.js');
 module.exports = Tasker;
