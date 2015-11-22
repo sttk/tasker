@@ -1,7 +1,7 @@
 'use strict';
 
 var path = require('path');
-var tasker = require(path.resolve('./lib/load_ex.js'));
+var tasker = require(path.resolve('./lib/needed.js'));
 
 testsuite('Tasker - A task registry', function() {
   this.testcase('Merge multiple js files.', {

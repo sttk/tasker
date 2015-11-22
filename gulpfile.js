@@ -30,7 +30,7 @@ gulp.task('lint', function(done) {
 });
 
 gulp.task('lint-for-test', function(done) {
-  var js = ghelp.get_argv('js');
+  var js = ghelp.getArgv('js');
   if (js == null) {
     console.log("!ERROR: The option 'js' should be specified js path.");
     return;
@@ -47,13 +47,18 @@ gulp.task('lint-for-test', function(done) {
 });
 
 gulp.task('test', [ 'lint', 'lint-for-test' ], function(done) {
-  var js = ghelp.get_argv('js');
+  var js = ghelp.getArgv('js');
   if (js == null) {
     console.log("!ERROR: The option 'js' should be specified js path.");
     return;
   }
-  var exit = function() { process.exit(1); }
-  jsunit.run(js, {pass:done, fail:exit, rterr:exit, pgerr:exit});
+  var json = ghelp.getArgv('report-file');
+  if (json == null) {
+    var exit = function() { process.exit(1); }
+    jsunit.run(js, {pass:done, fail:exit, rterr:exit, pgerr:exit});
+  } else {
+    jsunit.run(js, done);
+  }
 }).help = {
   '': 'runs a js code for test.',
   '--js=file': 'specifys a js path containing a unit test code.',

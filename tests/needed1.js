@@ -1,12 +1,13 @@
 'use strict';
 
 var path = require('path');
-var tasker = require(path.resolve('./lib/load_ex.js'));
+var tasker = require(path.resolve('./lib/needed.js'));
 
 testsuite('Tasker - A task registry', function() {
   this.testcase('Merge multiple js files.', {
     pre: function() {
       tasker.file = path.resolve('./tests/_load_a.js');
+      tasker.target = 'taskA1';
     },
     run: function() {
       tasker.load(path.resolve('./tests/_load_a.js'));
@@ -20,14 +21,10 @@ testsuite('Tasker - A task registry', function() {
 '　└─taskB0 (_load_b.js:6)\n' +
 'taskA2\n' +
 'taskA3\n' +
-'├─taskA4\n' +
-'│ └─taskC0 <undefined>\n' +
+'├─taskA4 <undefined>\n' +
 '└─taskB1 (_load_b.js)\n' +
 '　├─taskA2\n' +
 '　└─taskB0 (_load_b.js:6)\n' +
-'taskA4\n' +
-'└─taskC0 <undefined>\n' +
-'taskA5\n' +
 'taskB0 (_load_b.js:10)\n' +
 'taskB1 (_load_b.js)\n' +
 '├─taskA2\n' +

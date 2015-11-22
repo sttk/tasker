@@ -14,6 +14,7 @@ The product improved in following stages.
 4. [List children and descendants.](#listing)
 5. [Support forward referece.](#forwardref)
 6. [Merge multiple js files.](#load)
+7. [Entry only tasks needed.](#needed)
 
 ---
 
@@ -219,7 +220,7 @@ tasker.entry('taskA0', []);
 ```
 
 ```js
-// test_b.js
+// ./tests/_load_b.js
 var tasker = require('./lib/load_ex.js');
 tasker.entry('taskB0');
 tasker.entry('taskB1', ['taskC0', 'taskB0']);
@@ -228,7 +229,7 @@ tasker.entry('taskB0');
 
 ```js
 var tasker = require('./lib/load_ex.js');
-var tasker.load('./tests/_load_a.js');
+tasker.load('./tests/_load_a.js');
 tasker.tree();
 
 // The above code displays as follows:
@@ -242,6 +243,53 @@ tasker.tree();
 // taskB1 (_load_b.js)
 // ├─taskC0 <undefined>
 // └─taskB0 (_load_b.js:3)
+```
+
+### <a name="needed"></a>Entry only tasks needed.
+
+```js
+// tests/_load_a.js
+var tasker = require('./lib/needed.js');
+tasker.entry('taskA0', []);
+tasker.entry('taskA3', ['taskA4', 'taskB1']);
+tasker.entry('taskA1', ['taskA0', 'taskB1']);
+tasker.load('./tests/_load_b.js');
+tasker.entry('taskA2', []);
+tasker.entry('taskA4', ['taskC0']);
+tasker.entry('taskA5', []);
+```
+
+```js
+// tests/_load_b.js
+var tasker = require('./lib/needed.js');
+tasker.entry('taskB0');
+tasker.entry('taskB1', ['taskA2', 'taskB0']);
+```
+
+```js
+var tasker = require('./lib/needed.js');
+tasker._target = 'taskA1';
+tasker.load('./tests/_load_a.js');
+tasker.tree();
+
+// The above code displays as follows:
+// (!) taskA4 and taskA5 are not entried.
+// taskA0
+// taskA1
+// ├─taskA0
+// └─taskB1 (_load_b.js)
+// 　├─taskA2
+// 　└─taskB0 (_load_b.js)
+// taskA2
+// taskA3
+// ├─taskA4 <undefined>
+// └─taskB1 (_load_b.js)
+// 　├─taskA2
+// 　└─taskB0 (_load_b.js)
+// taskB0 (_load_b.js)
+// taskB1 (_load_b.js)
+// ├─taskA2
+// └─taskB0 (_load_b.js)
 ```
 
 ## License

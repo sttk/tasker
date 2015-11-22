@@ -1,3 +1,3 @@
 'use strict';
-var Tasker = require('./tests/_load.js');
-module.exports = Tasker;
+var tasker = require('./lib/needed.js');
+module.exports = tasker;

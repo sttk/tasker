@@ -1,0 +1,341 @@
+body {
+  margin:0px;
+  padding:0px;
+  font-size:13px;
+  font-family:"ヒラギノ角ゴ Pro W3","Hiragino Kaku Gothic Pro","HiraKakuPro-W3","メイリオ",Meiryo,"ＭＳ Ｐゴシック","MS PGothic",Arial,Helvetica,sans-serif;
+}
+
+.ok {
+  background-color:#99f999;
+}
+
+.ng {
+  background-color:#f66;
+}
+
+.empty {
+  background-color:#fd8;
+}
+
+
+/* for test page */
+
+div.test_header {
+  padding:1ex 2ex;
+  background-color:#f9f6f6;
+  border-bottom-style:solid;
+  border-bottom-width:1px;
+  border-bottom-color:#dbb;
+}
+
+div.test_title {
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:0.5ex;
+}
+
+span.test_links {
+  font-size:11px;
+  margin-left:2ex;
+  color:#679;
+}
+
+span.test_links a {
+  font-size:11px;
+  font-style:italic;
+  color:#679;
+}
+
+a.test_show_cases {
+  margin-left:4px;
+  margin-right:4px;
+}
+
+a.test_show_scenes {
+  margin-left:4px;
+  margin-right:4px;
+}
+
+a.test_show_details {
+  margin-left:4px;
+  margin-right:2ex;
+}
+
+a.test_print {
+  margin-left:2ex;
+  margin-right:2ex;
+}
+
+table.test_progress_bar {
+  border-collapse:separate;
+  border-spacing:2px;
+}
+
+tr#idTestProgressBar {
+  height:12px;
+  background-color:#ccc;
+}
+
+td.test_progress {
+  cursor:pointer;
+}
+
+div.test_main {
+  overflow-y:auto;
+  background-color:#999;
+}
+
+div#idTestSpace {
+  padding:3px 3px 6px;
+}
+
+div.test_case_head {
+  font-size:14px;
+  background-color:#f6f3f3;
+  padding:3px 2px 3px 2ex;
+  border-style:solid;
+  border-width:1px;
+  border-color:#dcc;
+}
+
+span.test_case_desc {
+  font-weight:bold;
+}
+
+div.test_case_result {
+  margin-left:2ex;
+}
+
+span.test_wait {
+  font-style:italic;
+  color:#000;
+}
+
+span.test_case_result {
+  margin-left:1ex;
+  margin-right:1ex;
+  padding:1px 6px;
+  color:#666;
+}
+
+span.test_case_links {
+  margin-left:1ex;
+  font-size:11px;
+  font-weight:normal;
+  color:#679;
+}
+
+span.test_case_links a {
+  font-style:italic;
+  font-size:11px;
+  color:#679;
+}
+
+div.test_case_body {
+  padding:0px 0px 0px 1px;
+  border-style:solid;
+  border-width:1px;
+  border-color:#dcc;
+  background-color:white;
+}
+
+div.test_scene {
+  padding-top:1px;
+}
+
+div.test_scene_head {
+  padding:1px 1px 1px 2ex;
+  border-style:solid;
+  border-width:1px;
+  border-color:#dcc;
+  background-color:#fbf9f9;
+}
+
+span.test_scene_desc {
+  font-weight:bold;
+}
+
+span.test_scene_result {
+  margin-left:1ex;
+  margin-right:1ex;
+  padding:0px 3px;
+  color:#666;
+}
+
+div.test_scene_body {
+  padding:0px 0px 0px 1px;
+  border-style:solid;
+  border-width:1px 1px 0px 1px;
+  border-color:#dcc;
+  background-color:white;
+}
+
+div.test_judge {
+  padding-left:8px;
+}
+
+.test_judge_type {
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, "Liberation Mono", Monaco, "Lucida Console", monospace;
+}
+
+.test_judge_hbreak {
+  margin:3px 12px;
+  border-style:solid;
+  border-width:1px 0px 0px;
+  color:#ccc;
+}
+
+.test_judge_desc {
+  color:#00c;
+}
+
+.test_judge_ok {
+  padding:0px 3px;
+  color:#666;
+  background-color:#9f9;
+}
+
+.test_judge_ng {
+  padding:0px 3px;
+  color:#666;
+  background-color:#f99;
+}
+
+.test_judge_result_label {
+  font-weight:bold;
+  color:#c60;
+}
+
+.test_judge_result_value {
+  color:#c60;
+}
+
+.test_judge_expect_label {
+  font-weight:bold;
+  color:#a0c;
+}
+
+.test_judge_expect_value {
+  color:#a0c;
+}
+
+.test_unmatch {
+  font-weight:bold;
+  color:#f00;
+}
+
+.test_unmatch span {
+  font-weight:bold;
+  color:#f00;
+}
+
+
+/* for print page */
+
+div.print_header {
+  padding:1ex 2ex;
+  border-bottom-style:solid;
+  border-bottom-width:1px;
+  border-bottom-color:#666;
+  background-color:#fff;
+  color:black;
+}
+
+div.print_title {
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:0.5ex;
+}
+
+table.print_result_table {
+  font-size:13px;
+  width:100%;
+  color:black;
+}
+
+th.print_result_title {
+  text-align:left;
+  font-weight:normal;
+  width:80px;
+}
+
+th.print_result_status {
+  text-align:left;
+  font-weight:bold;
+  padding:0px 1ex;
+}
+
+div.print_main {
+  padding:1ex 2ex;
+  background-color:#fff;
+  color:black;
+}
+
+div.print_case_label {
+  margin-right:1ex;
+}
+
+table.print_case_results {
+  width:100%;
+  font-size:13px;
+  border-style:solid;
+  border-width:1px;
+  border-color:#666;
+  border-collapse:collapse;
+  color:black;
+}
+
+table.print_case_results tr.r0 {
+  background-color:#fff;
+}
+
+table.print_case_results tr.r1 {
+  background-color:#f9f9f9;
+}
+
+table.print_case_results tr.fault {
+  background-color:#fdd;
+}
+
+table.print_case_results tr.empty {
+  background-color:#fe9;
+}
+
+table.print_case_results th,
+table.print_case_results td {
+  vertical-align:top;
+  padding:0px 3px;
+  border-left:solid 1px black;
+  border-right:solid 1px black;
+  empty-cells:show;
+}
+
+table.print_case_results th {
+  background-color:#ddd;
+}
+
+table.print_case_results tr.thead,
+table.print_case_results tr.tfoot {
+  border-top:solid 1px black;
+  border-bottom:solid 1px black;
+}
+
+table.print_case_results tr.case td {
+  border-top:solid 1px black;
+}
+
+table.print_case_results tr.scene td {
+  border-top:dotted 1px black;
+}
+
+table.print_case_results .col1 {
+  width:30px;
+  text-align:center;
+}
+
+table.print_case_results .col3,
+table.print_case_results .col4 {
+  width:60px;
+  text-align:right;
+}
+
