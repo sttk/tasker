@@ -1,15 +1,15 @@
 'use strict';
 
-var path = require('path');
-var Tasker = require(path.resolve('./lib/listing.js'));
-
+var Tasker = require('tasker/src/listing.js');
 var logs = [];
 
 testsuite('Tasker - A task registry', function() {
   this.testcase('List children and descendants.', function() {
     this.commons({
-      tasker: (new function() {
+      TASKER: new Tasker(),
+      pre: function() {
         var tasker = new Tasker();
+        this.TASKER = tasker;
         tasker.onEntry = function(name, task, disp) {
           task.name = name;
           task.displayName = (disp) ? disp.toString() : name;
@@ -23,13 +23,17 @@ testsuite('Tasker - A task registry', function() {
         tasker.entry('task-6', ['task-4'], 'Task #6 <#4>');
         tasker.entry('task-7', ['task-0', 'task-6', 'task-5'],
           'Task #7 <#0,#6,#5>');
-        return tasker;
-      }())
+      },
+      post: function() {
+        var tasker = this.TASKER;
+        tasker.clear();
+      }
     }),
     this.scene('Task#forEachChild', {
       run: function() {
+        var tasker = this.TASKER;
         var s = '';
-        this.tasker.get('task-7').forEachChild(function(each, a, b) {
+        tasker.get('task-7').forEachChild(function(each, a, b) {
           s += each.element.name + '[' + each.index + '/' + each.count + ']:';
           s += a + ':' + b + '\n';
         }, 'A', 'B');
@@ -41,10 +45,41 @@ testsuite('Tasker - A task registry', function() {
         logs.push(s);
       }
     });
+    this.scene('Task#forEachChild (recursively)', {
+      run: function() {
+        var tasker = this.TASKER;
+        var s = tasker.get('task-7').displayName + '\n';
+        var fn =function(each, depth, indent) {
+          var task = each.element;
+          s += indent + ' |\n';
+          s += indent + ' +-' + task.displayName + '\n';
+          indent += (each.index === each.count - 1) ? '   ' : ' | ';
+          task.forEachChild(fn, depth + 1, indent);
+        };
+        tasker.get('task-7').forEachChild(fn, 0, '');
+        this.equal(s,
+          'Task #7 <#0,#6,#5>\n' +
+          ' |\n' +
+          ' +-Task #0\n' +
+          ' |\n' +
+          ' +-Task #6 <#4>\n' +
+          ' |  |\n' +
+          ' |  +-Task #4\n' +
+          ' |\n' +
+          ' +-Task #5 <#2,#3>\n' +
+          '    |\n' +
+          '    +-Task #2\n' +
+          '    |\n' +
+          '    +-Task #3\n' +
+          '');
+        logs.push(s);
+      }
+    });
     this.scene('Task#forEachDescendant', {
       run: function() {
-        var s = this.tasker.get('task-7').displayName + '\n';
-        this.tasker.get('task-7').forEachDescendant(function(each) {
+        var tasker = this.TASKER;
+        var s = tasker.get('task-7').displayName + '\n';
+        tasker.get('task-7').forEachDescendant(function(each) {
           for (var i=0, n=each.depth; i<n; i++) { s += '  '; }
           s += each.element.displayName;
           s += ' [' + each.index + '/' + each.count + ',' + each.depth + ']\n';
@@ -61,17 +96,22 @@ testsuite('Tasker - A task registry', function() {
         logs.push(s);
       }
     });
-    this.scene('Task#forEachChild (2)', {
+    this.scene('Task#forEachDescendant -2', {
       run: function() {
-        var s = this.tasker.get('task-7').displayName + '\n';
-        var fn =function(each, depth, indent) {
+        var tasker = this.TASKER;
+        var s = tasker.get('task-7').displayName + '\n';
+        var fn =function(each, indents) {
+          if (each.index === each.count - 1) {
+            indents[each.depth] = indents[each.depth - 1] + '   ';
+          } else {
+            indents[each.depth] = indents[each.depth - 1] + ' | ';
+          }
           var task = each.element;
+          var indent = indents[each.depth - 1];
           s += indent + ' |\n';
           s += indent + ' +-' + task.displayName + '\n';
-          indent += (each.index === each.count - 1) ? '   ' : ' | ';
-          task.forEachChild(fn, depth + 1, indent);
         };
-        this.tasker.get('task-7').forEachChild(fn, 0, '');
+        tasker.get('task-7').forEachDescendant(fn, ['']);
         this.equal(s,
           'Task #7 <#0,#6,#5>\n' +
           ' |\n' +

@@ -4,7 +4,7 @@
   "description": "A sample program of a task registry.",
   "main": "index.js",
   "scripts": {
-    "test": "gulp test --js=tests/lastest.js"
+    "test": "gulp travis"
   },
   "repository": {
     "type": "git",

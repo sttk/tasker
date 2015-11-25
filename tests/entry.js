@@ -1,7 +1,6 @@
 'use strict';
 
-var path = require('path');
-var Tasker = require(path.resolve('./lib/entry.js'));
+var Tasker = require('tasker/src/entry.js');
 
 testsuite('Tasker - A task registry', function() {
   this.testcase('Entry a task with its content.', function() {

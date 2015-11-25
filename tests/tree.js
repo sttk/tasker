@@ -1,8 +1,6 @@
 'use strict';
 
-var path = require('path');
-var Tasker = require(path.resolve('./lib/tree.js'));
-
+var Tasker = require('tasker/src/tree.js');
 
 testsuite('Tasker - A task registry', function() {
   this.testcase('Make a tree structure of tasks', function() {

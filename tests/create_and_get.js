@@ -1,7 +1,6 @@
 'use strict';
 
-var path = require('path');
-var Tasker = require(path.resolve('./lib/create_and_get.js'));
+var Tasker = require('tasker/src/create_and_get.js');
 
 testsuite('Tasker - A task registry', function() {
   this.testcase('Create and get tasks.', function() {

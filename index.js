@@ -1,3 +1,3 @@
 'use strict';
-var tasker = require('./lib/needed.js');
+var tasker = require('./src/needed1.js');
 module.exports = tasker;

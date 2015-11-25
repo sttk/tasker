@@ -1,6 +1,7 @@
 'use strict';
 
 var Tasker = require('./create_and_get.js');
+module.exports = Tasker;
 
 Tasker.prototype.entry = function(name) {
   var task = this.create(name);
@@ -10,5 +11,3 @@ Tasker.prototype.entry = function(name) {
   }
   return task;
 };
-
-module.exports = Tasker;

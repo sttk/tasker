@@ -1,0 +1,11 @@
+'use strict';
+var tasker = require('tasker/src/needed1.js');
+tasker.entry('taskA0', [], 'Task A0 [1]');
+tasker.entry('taskA3', ['taskA4', 'taskB1'], 'Task A3');
+tasker.entry('taskA0', [], 'Task A0 [2]');
+tasker.entry('taskA1', ['taskA0', 'taskB1'], 'Task A1');
+tasker.load('./loadedB1.js');
+tasker.entry('taskA0', [], 'Task A0 [3]');
+tasker.entry('taskA2');
+tasker.entry('taskA4', ['taskC0'], 'Task A4');
+tasker.entry('taskA5');

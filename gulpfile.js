@@ -6,6 +6,9 @@ var jshint = require('gulp-jshint');
 var stylish = require('jshint-stylish');
 var mapstream = require('map-stream');
 var jsunit = require('gulp-tarte-jsunit');
+var fs = require('fs');
+var exec = require('child_process').exec;
+
 
 gulp.task('default', [ 'help' ]);
 
@@ -13,9 +16,7 @@ gulp.task('help', function() {
   ghelp.show();
 }).help = 'shows a help message.';
 
-var srcs = [
-  'lib/create_and_get.js',
-];
+var srcs = ['src/*.js', 'src/lib/*.js'];
 
 gulp.task('lint', function(done) {
   function jshintMapper(data, cb) {
@@ -47,6 +48,13 @@ gulp.task('lint-for-test', function(done) {
 });
 
 gulp.task('test', [ 'lint', 'lint-for-test' ], function(done) {
+  var slink = './node_modules/tasker';
+  if (! fs.existsSync(slink)) {
+    fs.symlink('..', './node_modules/tasker', function(e) {
+      console.log("!ERROR: " + e);
+      return;
+    });
+  }
   var js = ghelp.getArgv('js');
   if (js == null) {
     console.log("!ERROR: The option 'js' should be specified js path.");
@@ -64,3 +72,18 @@ gulp.task('test', [ 'lint', 'lint-for-test' ], function(done) {
   '--js=file': 'specifys a js path containing a unit test code.',
   '[ --report-file=file ]': 'specifys a path of a report file.'
 };
+
+gulp.task('travis', function() {
+  var slink = './node_modules/tasker';
+  if (! fs.existsSync(slink)) {
+    fs.symlink('..', './node_modules/tasker', function(e) {
+      console.log("!ERROR: " + e);
+      return;
+    });
+  }
+  exec('node tests/travis.js', function(err, stdout, stderr) {
+    if (stdout != null) { console.log(stdout); }
+    if (stderr != null) { console.log(stderr); }
+    if (err != null) { throw err; }
+  });
+});

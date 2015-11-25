@@ -21,7 +21,7 @@ The product improved in following stages.
 ## <a name="create_and_get"></a>Create and get tasks.
 
 ```js
-var Tasker = require('./lib/create_and_get.js');
+var Tasker = require('tasker/src/create_and_get.js');
 var assert = require('assert');
 
 var tasker = new Tasker();
@@ -37,7 +37,7 @@ assert.strictEqual(task0, task00);
 ## <a name="entry"></a>Entry a task with its content.
 
 ```js
-var Tasker = require('./lib/entry.js');
+var Tasker = require('tasker/src/entry.js');
 var assert = require('assert');
 
 var tasker = new Tasker();
@@ -62,7 +62,7 @@ assert.equal(task1.num, 999);
 ## <a name="tree"></a>Make a tree structure of tasks
 
 ```js
-var Tasker = require('./lib/tree.js');
+var Tasker = require('tasker/src/tree.js');
 var assert = require('assert');
 
 var tasker = new Tasker();
@@ -108,8 +108,7 @@ try {
 ## <a name="listing"></a>List children and descendants.
 
 ```js
-var Tasker = require('./lib/tree.js');
-var Task = require('./lib/listing.js');
+var Tasker = require('tasker/src/listing.js');
 var assert = require('assert');
 
 var tasker = new Tasker();
@@ -153,143 +152,152 @@ console.log(s);
 //     Task #2 [0/2,2]
 //     Task #3 [1/2,2]
 
-s = tasker.get('task-7').displayName + '\n';
-var fn = function(each, depth, indent) {
-  var task = each.element;
-  s += indent + ' |\n';
-  s += indent + ' +-' + task.displayName + '\n';
-  indent += (each.index === each.count - 1) ? '   ' : ' | ';
-  task.forEachChild(fn, depth + 1, indent);
-};
-tasker.get('task-7').forEachChild(fn, 0, '');
+s = '';
+tasker.get('task-7').forEachTreeNode(function(each) {
+  s += '  '.repeat(each.depth) + each.element.displayName;
+  s += ' [' + each.index + '/' + each.count + ',' + each.depth + ']\n';
+});
 console.log(s);
 // The above code displays as follows:
 // Task #7 <#0,#6,#5>
-//  |
-//  +-Task #0
-//  |
-//  +-Task #6 <#4>
-//  |  |
-//  |  +-Task #4
-//  |
-//  +-Task #5 <#2,#3>
-//     |
-//     +-Task #2
-//     |
-//     +-Task #3
+//   Task #0 [0/3,1]
+//   Task #6 <#4> [1/3,1]
+//     Task #4 [0/1,2]
+//   Task #5 <#2,#3> [2/3,1]
+//     Task #2 [0/2,2]
+//     Task #3 [1/2,2]
 ```
+
 ### <a name="forwardref"></a> Support forward referece.
 
 ```js
-var Tasker = require('./lib/forwardref.js');
+var Tasker = require('tasker/src/forwardref.js');
 var assert = require('assert');
 
-var task0 = tasker.entry('task-0', ['task-1'], 'Task #0');
-var task1 = tasker.get('task-1');
-assert.equal(task0.name, 'task-0');
-assert.equal(task0.displayName, 'Task #0');
-assert.equal(task0._childs.length, 1);
-assert.equal(task0._childs[0], task1);
-assert.equal(task1._undefined, 'task-1');
-assert.equal(task1._childs, undefined);
-assert.equal(tasker._needed['task-0'], undefined);
-assert.equal(tasker._needed['task-1'], task1);
+var tasker = new Tasker();
+tasker.onEntry = function(name, task, disp) {
+  task.name = name;
+  task.displayName = (disp) ? disp.toString() : name;
+};
 
-var newTask = tasker.entry('task-1', [], 'Task #1');
-assert.equal(task1, newTask);
-assert.equal(task1.name, 'task-1');
-assert.equal(task1.displayName, 'Task #1');
-assert.equal(task0._childs.length, 1);
-assert.equal(task0._childs[0], task1);
-assert.equal(task1._undefined, undefined);
-assert.equal(task1._childs.length, 0);
-assert.equal(tasker._needed['task-0'], undefined);
-assert.equal(tasker._needed['task-1'], undefined);
+tasker.entry('task-0', ['task-1', 'task-2'], 'Task #0');
+tasker.entry('task-1', [], 'Task #1');
+tasker.entry('task-2', [], 'Task #2');
+tasker.entry('task-1', [], 'Task #1 (2)');
+tasker.entry('task-3', ['task-1'], 'Task #3');
+
+var s = '';
+Object.keys(tasker._tasks).sort().forEach(function(name) {
+  tasker.get(name).forEachTreeNode(function(each) {
+    s += '  '.repeat(each.depth) + each.element.displayName + '\n';
+  });
+});
+console.log(s);
+// The above code displays as follows:
+// Task #0
+//   Task #1
+//   Task #2
+// Task #1 (2)
+// Task #2
+// Task #3
+//   Task #1 (2)
 ```
 
-### <a name="load"></a>Merge multiple js files.
+## <a name="load"></a>Merge multiple js files.
 
 ```js
-// ./tests/_load_a.js
-var tasker = require('./lib/load_ex.js');
+// ./tests/load/loadedA.js
+var tasker = require('tasker/src/load1.js');
 tasker.entry('taskA0', []);
+tasker.entry('taskA3', ['taskA4','taskB1']);
 tasker.entry('taskA0', []);
 tasker.entry('taskA1', ['taskA0', 'taskB1']);
-tasker.load('./tests/_load_b.js');
+tasker.load('./loadedB.js');
 tasker.entry('taskA0', []);
+tasker.entry('taskA2');
+tasker.entry('taskA4', ['taskC0']);
+tasker.entry('taskA5', []);
 ```
 
 ```js
-// ./tests/_load_b.js
-var tasker = require('./lib/load_ex.js');
+// ./tests/load/loadedB.js
+var tasker = require('tasker/src/load1.js');
 tasker.entry('taskB0');
 tasker.entry('taskB1', ['taskC0', 'taskB0']);
 tasker.entry('taskB0');
 ```
 
 ```js
-var tasker = require('./lib/load_ex.js');
-tasker.load('./tests/_load_a.js');
-tasker.tree();
+var tasker = require('tasker/src/load1.js');
+var Lineno = require('tasker/src/lib/lineno.js');
+tasker._lineno = new Lineno('./tests/load/loadedA.js');
+tasker.load(tasker._lineno.file());
+console.log(tasker.tree());
 
 // The above code displays as follows:
-// taskA0 (7)
-// taskA1
-// ├─taskA0 (4)
-// └─taskB1 (_load_b.js)
-// 　├─taskC0 <undefined>
-// 　└─taskB0 (_load_b.js:3)
-// taskB0 (_load_b.js:5)
-// taskB1 (_load_b.js)
-// ├─taskC0 <undefined>
-// └─taskB0 (_load_b.js:3)
-```
-
-### <a name="needed"></a>Entry only tasks needed.
-
-```js
-// tests/_load_a.js
-var tasker = require('./lib/needed.js');
-tasker.entry('taskA0', []);
-tasker.entry('taskA3', ['taskA4', 'taskB1']);
-tasker.entry('taskA1', ['taskA0', 'taskB1']);
-tasker.load('./tests/_load_b.js');
-tasker.entry('taskA2', []);
-tasker.entry('taskA4', ['taskC0']);
-tasker.entry('taskA5', []);
-```
-
-```js
-// tests/_load_b.js
-var tasker = require('./lib/needed.js');
-tasker.entry('taskB0');
-tasker.entry('taskB1', ['taskA2', 'taskB0']);
-```
-
-```js
-var tasker = require('./lib/needed.js');
-tasker._target = 'taskA1';
-tasker.load('./tests/_load_a.js');
-tasker.tree();
-
-// The above code displays as follows:
-// (!) taskA4 and taskA5 are not entried.
-// taskA0
-// taskA1
-// ├─taskA0
-// └─taskB1 (_load_b.js)
+// Task A0 [3] (8)
+// Task A1
+// ├─Task A0 [2] (5)
+// └─Task B1 (loadedB.js)
 // 　├─taskA2
-// 　└─taskB0 (_load_b.js)
+// 　└─Task B0 [1] (loadedB.js:3)
 // taskA2
-// taskA3
-// ├─taskA4 <undefined>
-// └─taskB1 (_load_b.js)
+// Task A3
+// ├─Task A4
+// │ └─taskC0 <undefined>
+// └─Task B1 (loadedB.js)
 // 　├─taskA2
-// 　└─taskB0 (_load_b.js)
-// taskB0 (_load_b.js)
-// taskB1 (_load_b.js)
+// 　└─Task B0 [1] (loadedB.js:3)
+// Task A4
+// └─taskC0 <undefined>
+// taskA5
+// Task B0 [2] (loadedB.js:5)
+// Task B1 (loadedB.js)
 // ├─taskA2
-// └─taskB0 (_load_b.js)
+// └─Task B0 [1] (loadedB.js:3)
+```
+
+## <a name="needed"></a>Entry only tasks needed.
+
+```js
+// ./tests/needed/loadedA3.js
+var tasker = require('tasker/src/needed1.js');
+tasker.entry('taskA0', ['taskA2'], 'Task A0 [1]);
+tasker.entry('taskA3', ['taskA4','taskB1'], 'Task A3');
+tasker.entry('taskA0', [], 'Task A0 [2]);
+tasker.entry('taskA2');
+tasker.entry('taskA1', ['taskA0', 'taskB1'], 'Task A1');
+tasker.load('./loadedB3.js');
+tasker.entry('taskA0', [], 'Task A0 [3]);
+tasker.entry('taskA4', ['taskC0'], 'Task A4');
+tasker.entry('taskA5');
+```
+
+```js
+// ./tests/needed/loadedB3.js
+var tasker = require('tasker/src/needed1.js');
+tasker.entry('taskB0', null, 'Task B0 [1]');
+tasker.entry('taskB1', ['taskC0', 'taskB0'], 'Task B1');
+tasker.entry('taskB0', null, 'Task B0 [2]');
+```
+
+```js
+var tasker = require('tasker/src/needed1.js');
+var Lineno = require('tasker/src/lib/lineno.js');
+tasker._lineno = new Lineno('./tests/needed/loadedA3.js');
+tasker.target = 'taskA0';
+tasker.load(tasker._lineno.file());
+console.log(tasker.tree());
+
+// The above code displays as follows:
+// (!) On top level, a first task is given priority.
+// (!) taskA4, taskA5, tasks in loadedB3.js are ignored.
+// Task A0 [1] (3)
+// └─taskA2
+// taskA2
+// Task A3
+// ├─taskA4 <undefined>
+// └─taskB1 <undefined>
 ```
 
 ## License
@@ -297,3 +305,4 @@ tasker.tree();
 Copyright © Takayuki Sato.
 
 Tasker is free software under [MIT](<http://opensource.org/licenses/MIT>) License.
+G

@@ -2,10 +2,10 @@
 
 var path = require('path');
 
-var LineNo = function(filepath) {
+var Lineno = function(filepath) {
 
-  function constructor(fpath) {
-    var _filepath = path.resolve(fpath);;
+  function Constructor(fpath) {
+    var _filepath = path.resolve(fpath);
     function _getLineNumber() {
       var original = Error.prepareStackTrace;
       Error.prepareStackTrace = _prepareStackTrace;
@@ -14,7 +14,7 @@ var LineNo = function(filepath) {
       var lineNo = error.stack;
       Error.prepareStackTrace = original;
       return lineNo;
-    };
+    }
     function _prepareStackTrace(error, structuredStackTrace) {
       var i, lineNo = -1;
       for (i=0; i<structuredStackTrace.length; i++) {
@@ -34,6 +34,8 @@ var LineNo = function(filepath) {
     this.get = _getLineNumber;
     this.file = _getFilePath;
   }
-  return new constructor(filepath);
-}
-module.exports = LineNo;
+  Constructor.prototype = Lineno.prototype;
+  return new Constructor(filepath);
+};
+
+module.exports = Lineno;

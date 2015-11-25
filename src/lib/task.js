@@ -1,4 +1,4 @@
-'use strict';
+'use struct';
 
 var Task = function() {
   function Constructor() {}

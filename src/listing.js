@@ -1,6 +1,5 @@
 'use strict';
 
 var Tasker = require('./tree.js');
-var Task = require('./_task2.js');
-
+var Task = require('./lib/task_foreach.js');
 module.exports = Tasker;
