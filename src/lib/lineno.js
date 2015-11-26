@@ -23,6 +23,13 @@ var Lineno = function(filepath) {
         if (_filepath === fnm) {
           lineNo = st.getLineNumber();
           break;
+        } else if (  // for load
+          (st.getFunctionName() == null) &&
+          (st.getMethodName() == null) &&
+          (path.basename(_filepath) === fnm)
+        ) {
+          lineNo = st.getLineNumber();
+          break;
         }
       }
       return lineNo;

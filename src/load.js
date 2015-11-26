@@ -3,6 +3,7 @@
 var path = require('path');
 var Tasker = require('./forwardref.js');
 var Lineno = require('./lib/lineno.js');
+var load = require('load');
 
 var originalTasker = Tasker;
 Tasker = function() {
@@ -58,8 +59,9 @@ Tasker.prototype.load = function(filename) {
   this._loaded[abspath] = true;
   var prev = this._lineno;
   this._lineno = lineno;
-  require(abspath);
-  this._lineno = prev;
+  load(abspath);
+  //require(abspath);
+  if (prev) { this._lineno = prev; } else { delete this._lineno; }
 };
 
 Tasker.prototype.loadLater = function(filename) {

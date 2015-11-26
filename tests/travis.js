@@ -1,27 +1,30 @@
-var tasker = require('tasker/src/needed1.js');
+var tasker = require('tasker/src/namespace1.js');
 var Lineno = require('tasker/src/lib/lineno.js');
 var assert = require('assert');
-tasker._lineno = new Lineno('./tests/needed/loadedA3.js');
-tasker.target = 'taskA0';
+tasker._lineno = new Lineno('./tests/namespace/loadedA5.js');
+var Lineno = require('tasker/src/lib/lineno.js');
 tasker.load(tasker._lineno.file());
 var log = tasker.tree();
-assert.equal(log,
-'Task A0 [1] (3)\n' +
-'└─taskA2\n' +
-'taskA2\n' +
-'Task A3\n' +
-'├─taskA4 <undefined>\n' +
-'└─taskB1 <undefined>\n' +
-'');
 console.log(log);
-
-// The above code displays as follows:
-// (!) On top level, a first task is given priority.
-// (!) taskA4, taskA5, tasks in loadedB3.js are ignored.
-// Task A0 [1] (3)
-// └─taskA2
-// taskA2
-// Task A3
-// ├─taskA4 <undefined>
-// └─taskB1 <undefined>
-
+assert.equal(log,
+'taskA0\n' +
+'├─taskA1\n' +
+'│ └─taskB0@bbb (loadedB.js)\n' +
+'│ 　├─taskC0@bbb (loadedC.js)\n' +
+'│ 　└─taskC0@XXX@bbb (loadedC.js)\n' +
+'└─taskA2\n' +
+'　└─taskC0@XXX@bbb (loadedC.js)\n' +
+'taskA1\n' +
+'└─taskB0@bbb (loadedB.js)\n' +
+'　├─taskC0@bbb (loadedC.js)\n' +
+'　└─taskC0@XXX@bbb (loadedC.js)\n' +
+'taskA2\n' +
+'└─taskC0@XXX@bbb (loadedC.js)\n' +
+'taskA3\n' +
+'└─taskC0@bbb (loadedC.js)\n' +
+'taskB0@bbb (loadedB.js)\n' +
+'├─taskC0@bbb (loadedC.js)\n' +
+'└─taskC0@XXX@bbb (loadedC.js)\n' +
+'taskC0@XXX@bbb (loadedC.js)\n' +
+'taskC0@bbb (loadedC.js)\n' +
+'');

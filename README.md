@@ -15,6 +15,7 @@ The product improved in following stages.
 5. [Support forward referece.](#forwardref)
 6. [Merge multiple js files.](#load)
 7. [Entry only tasks needed.](#needed)
+8. [Namespace for tasks in merged files.](#namespace)
 
 ---
 
@@ -136,6 +137,7 @@ console.log(s);
 // task-0[0/3]:A:B
 // task-6[1/3]:A:B
 // task-5[2/3]:A:B
+// 
 
 s = tasker.get('task-7').displayName + '\n';
 tasker.get('task-7').forEachDescendant(function(each) {
@@ -151,6 +153,7 @@ console.log(s);
 //   Task #5 <#2,#3> [2/3,1]
 //     Task #2 [0/2,2]
 //     Task #3 [1/2,2]
+// 
 
 s = '';
 tasker.get('task-7').forEachTreeNode(function(each) {
@@ -166,6 +169,7 @@ console.log(s);
 //   Task #5 <#2,#3> [2/3,1]
 //     Task #2 [0/2,2]
 //     Task #3 [1/2,2]
+// 
 ```
 
 ### <a name="forwardref"></a> Support forward referece.
@@ -201,6 +205,7 @@ console.log(s);
 // Task #2
 // Task #3
 //   Task #1 (2)
+// 
 ```
 
 ## <a name="load"></a>Merge multiple js files.
@@ -255,6 +260,7 @@ console.log(tasker.tree());
 // Task B1 (loadedB.js)
 // ├─taskA2
 // └─Task B0 [1] (loadedB.js:3)
+// 
 ```
 
 ## <a name="needed"></a>Entry only tasks needed.
@@ -298,6 +304,64 @@ console.log(tasker.tree());
 // Task A3
 // ├─taskA4 <undefined>
 // └─taskB1 <undefined>
+// 
+```
+
+## <a name="namespace"></a>Namespace for tasks in merged files.
+
+```js
+// ./tests/namespace/loadedA.js
+var tasker = require('tasker/src/namespace1.js');
+tasker.entry('taskA0', ['taskA1', 'taskA2']);
+tasker.load('./loadedB.js', 'bbb');
+tasker.entry('taskA1', ['taskB0@bbb']);
+tasker.entry('taskA2', ['taskC0@XXX@bbb']);
+tasker.entry('taskA3', ['taskC0@bbb']);
+```
+
+```js
+// ./tests/namespace/loadedB.js
+var tasker = require('tasker/src/namespace1.js');
+tasker.entry('taskB0', ['taskC0', 'taskC0@XXX']);
+tasker.load('./loadedC.js');
+tasker.load('./loadedC.js', 'XXX');
+```
+
+```js
+// ./tests/namespace/loadedC.js
+var tasker = require('tasker/src/namespace1.js');
+tasker.entry('taskC0');
+```
+
+```js
+var tasker = require('tasker/src/namespace1.js');
+var Lineno = require('tasker/src/lib/lineno.js');
+tasker._lineno = new Lineno('./tests/namespace/loadedA3.js');
+tasker.load(tasker._lineno.file());
+console.log(tasker.tree());
+
+// The above code displays as follows:
+// taskA0
+// ├─taskA1
+// │ └─taskB0@bbb (loadedB.js)
+// │ 　├─taskC0@bbb (loadedC.js)
+// │ 　└─taskC0@XXX@bbb (loadedC.js)
+// └─taskA2
+// 　└─taskC0@XXX@bbb (loadedC.js)
+// taskA1
+// └─taskB0@bbb (loadedB.js)
+// 　├─taskC0@bbb (loadedC.js)
+// 　└─taskC0@XXX@bbb (loadedC.js)
+// taskA2
+// └─taskC0@XXX@bbb (loadedC.js)
+// taskA3
+// └─taskC0@bbb (loadedC.js)
+// taskB0@bbb (loadedB.js)
+// ├─taskC0@bbb (loadedC.js)
+// └─taskC0@XXX@bbb (loadedC.js)
+// taskC0@XXX@bbb (loadedC.js)
+// taskC0@bbb (loadedC.js)
+// 
 ```
 
 ## License
@@ -305,4 +369,3 @@ console.log(tasker.tree());
 Copyright © Takayuki Sato.
 
 Tasker is free software under [MIT](<http://opensource.org/licenses/MIT>) License.
-G

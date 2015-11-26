@@ -51,7 +51,7 @@ gulp.task('test', [ 'lint', 'lint-for-test' ], function(done) {
   var slink = './node_modules/tasker';
   if (! fs.existsSync(slink)) {
     fs.symlink('..', './node_modules/tasker', function(e) {
-      console.log("!ERROR: " + e);
+      if (e != null) { console.log("!ERROR: " + e); }
       return;
     });
   }
@@ -77,7 +77,7 @@ gulp.task('travis', function() {
   var slink = './node_modules/tasker';
   if (! fs.existsSync(slink)) {
     fs.symlink('..', './node_modules/tasker', function(e) {
-      console.log("!ERROR: " + e);
+      if (e != null) { console.log("!ERROR: " + e); }
       return;
     });
   }
