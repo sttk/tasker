@@ -1,0 +1,10 @@
+language: node_js
+
+node_js:
+  - "0.10"
+  - "0.12"
+  - "stable"
+script:
+  - gulp test --js=tests/lineno.js
+  - gulp test --js=tests/task.js
+  - gulp test --js=tests/tasker.js
