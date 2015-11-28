@@ -1,4 +1,4 @@
 'use strict';
 
-var Tasker = require('tasker/src/Tasker.js');
+var Tasker = require('tasker/src/tasker.js');
 module.exports = new Tasker();
