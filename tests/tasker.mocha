@@ -1,0 +1,1667 @@
+'use strict';
+
+var Tasker = require('tasker/src/tasker.js');
+var Task = require('tasker/src/task.js');
+var Lineno = require('tasker/src/lineno.js');
+var path = require('path');
+var assert = require('assert');
+
+describe('Test of Tasker', function() {
+  
+  it('Constructor', function() {
+    var tasker = new Tasker();
+    assert.equal(tasker.toplevels.size, 0);
+    assert.equal(tasker.target, null);
+    assert.equal(tasker._tasks.size, 0);
+    assert.equal(tasker._needed.size, 0);
+    assert.equal(tasker._loaded.size, 0);
+    assert.equal(tasker._willLoad.size, 0);
+    assert.equal(tasker._lineno.filename, path.resolve(process.argv[1]));
+    assert.equal(tasker._namespace, null);
+  });
+
+  it('#clear', function() {
+    var tasker = new Tasker();
+    var task0 = new Task('task-0', []);
+    var task1 = new Task('task-1', []);
+    var task2 = new Task('task-2', []);
+    var task3 = new Task('task-3', []);
+    tasker.toplevels.set('task-0', task0);
+    tasker.target = 'ccc';
+    tasker._tasks.set('task-1', task1);
+    tasker._needed.set('task-2', task2);
+    tasker._loaded.set('task-3', task3);
+    tasker._willLoad.set('kkk', {filename:__filename, namespace:'xxx'});
+    tasker._lineno = new Lineno('aaa');
+    tasker._namespace = 'bbb';
+
+    assert.equal(tasker.toplevels.size, 1);
+    assert.equal(tasker.target, 'ccc');
+    assert.equal(tasker._tasks.size, 1);
+    assert.equal(tasker._needed.size, 1);
+    assert.equal(tasker._loaded.size, 1);
+    assert.equal(tasker._willLoad.size, 1);
+    assert.equal(tasker.toplevels.get('task-0'), task0);
+    assert.equal(tasker._tasks.get('task-1'), task1);
+    assert.equal(tasker._needed.get('task-2'), task2);
+    assert.equal(tasker._loaded.get('task-3'), task3);
+    assert.equal(tasker._willLoad.get('kkk').filename, __filename);
+    assert.equal(tasker._willLoad.get('kkk').namespace, 'xxx');
+    assert.equal(tasker._lineno.filename, 'aaa');
+    assert.equal(tasker._namespace, 'bbb');
+
+    tasker.clear();
+
+    assert.equal(tasker.toplevels.size, 0);
+    assert.equal(tasker.target, null);
+    assert.equal(tasker._tasks.size, 0);
+    assert.equal(tasker._needed.size, 0);
+    assert.equal(tasker._loaded.size, 0);
+    assert.equal(tasker._willLoad.size, 0);
+    assert.equal(tasker._lineno.filename, path.resolve(process.argv[1]));
+    assert.equal(tasker._namespace, null);
+  });
+
+  describe('#get', function() {
+
+    it('no namespace', function() {
+      var tasker = new Tasker();
+      assert.equal(tasker.get('task-0'), null);
+      assert.equal(tasker.get('task-1'), null);
+      assert.equal(tasker.get('task-2'), null);
+      assert.equal(tasker.get('task-3'), null);
+
+      var task0 = new Task('task-0', []);
+      var task1 = new Task('task-1', []);
+      var task2 = new Task('task-2', []);
+      var task3 = new Task('task-3', []);
+
+      tasker._tasks.set('task-0', task0);
+      tasker._tasks.set('task-1', task1);
+      tasker.toplevels.set('task-2', task2);
+      tasker.toplevels.set('task-3', task3);
+
+      assert.equal(tasker.get('task-0'), null);
+      assert.equal(tasker.get('task-1'), null);
+      assert.equal(tasker.get('task-2'), task2);
+      assert.equal(tasker.get('task-3'), task3);
+    });
+
+    it('with namespace', function() {
+      var tasker = new Tasker();
+      tasker._namespace = 'NN';
+
+      assert.equal(tasker.get('task-0'), null);
+      assert.equal(tasker.get('task-1'), null);
+      assert.equal(tasker.get('task-2'), null);
+      assert.equal(tasker.get('task-3'), null);
+      assert.equal(tasker.get('task-0@NN'), null);
+      assert.equal(tasker.get('task-1@NN'), null);
+      assert.equal(tasker.get('task-2@NN'), null);
+      assert.equal(tasker.get('task-3@NN'), null);
+
+      var task0 = new Task('task-0', []);
+      var task1 = new Task('task-1', []);
+      var task2 = new Task('task-2', []);
+      var task3 = new Task('task-3', []);
+      var task0nn = new Task('task-0', []);
+      var task1nn = new Task('task-1', []);
+      var task2nn = new Task('task-2', []);
+      var task3nn = new Task('task-3', []);
+
+      tasker._tasks.set('task-0', task0);
+      tasker._tasks.set('task-1', task1);
+      tasker.toplevels.set('task-2', task2);
+      tasker.toplevels.set('task-3', task3);
+      tasker._tasks.set('task-0@NN', task0nn);
+      tasker._tasks.set('task-1@NN', task1nn);
+      tasker.toplevels.set('task-2@NN', task2nn);
+      tasker.toplevels.set('task-3@NN', task3nn);
+
+      assert.equal(tasker.get('task-0'), null);
+      assert.equal(tasker.get('task-1'), null);
+      assert.equal(tasker.get('task-2'), task2nn);
+      assert.equal(tasker.get('task-3'), task3nn);
+      assert.equal(tasker.get('task-0@NN'), null);
+      assert.equal(tasker.get('task-1@NN'), null);
+      assert.equal(tasker.get('task-2@NN'), null);
+      assert.equal(tasker.get('task-3@NN'), null);
+    });
+
+  });
+
+  describe('#getByQName', function() {
+
+    it('no namespace', function() {
+      var tasker = new Tasker();
+      assert.equal(tasker.get('task-0'), null);
+      assert.equal(tasker.get('task-1'), null);
+      assert.equal(tasker.get('task-2'), null);
+      assert.equal(tasker.get('task-3'), null);
+
+      var task0 = new Task('task-0', []);
+      var task1 = new Task('task-1', []);
+      var task2 = new Task('task-2', []);
+      var task3 = new Task('task-3', []);
+
+      tasker._tasks.set('task-0', task0);
+      tasker._tasks.set('task-1', task1);
+      tasker.toplevels.set('task-2', task2);
+      tasker.toplevels.set('task-3', task3);
+
+      assert.equal(tasker.getByQName('task-0'), null);
+      assert.equal(tasker.getByQName('task-1'), null);
+      assert.equal(tasker.getByQName('task-2'), task2);
+      assert.equal(tasker.getByQName('task-3'), task3);
+    });
+
+    it('with namespace', function() {
+      var tasker = new Tasker();
+      tasker._namespace = 'NN';
+
+      assert.equal(tasker.getByQName('task-0'), null);
+      assert.equal(tasker.getByQName('task-1'), null);
+      assert.equal(tasker.getByQName('task-2'), null);
+      assert.equal(tasker.getByQName('task-3'), null);
+      assert.equal(tasker.getByQName('task-0@NN'), null);
+      assert.equal(tasker.getByQName('task-1@NN'), null);
+      assert.equal(tasker.getByQName('task-2@NN'), null);
+      assert.equal(tasker.getByQName('task-3@NN'), null);
+
+      var task0 = new Task('task-0', []);
+      var task1 = new Task('task-1', []);
+      var task2 = new Task('task-2', []);
+      var task3 = new Task('task-3', []);
+      var task0nn = new Task('task-0', []);
+      var task1nn = new Task('task-1', []);
+      var task2nn = new Task('task-2', []);
+      var task3nn = new Task('task-3', []);
+
+      tasker._tasks.set('task-0', task0);
+      tasker._tasks.set('task-1', task1);
+      tasker.toplevels.set('task-2', task2);
+      tasker.toplevels.set('task-3', task3);
+      tasker._tasks.set('task-0@NN', task0nn);
+      tasker._tasks.set('task-1@NN', task1nn);
+      tasker.toplevels.set('task-2@NN', task2nn);
+      tasker.toplevels.set('task-3@NN', task3nn);
+
+      assert.equal(tasker.getByQName('task-0'), null);
+      assert.equal(tasker.getByQName('task-1'), null);
+      assert.equal(tasker.getByQName('task-2'), task2);
+      assert.equal(tasker.getByQName('task-3'), task3);
+      assert.equal(tasker.getByQName('task-0@NN'), null);
+      assert.equal(tasker.getByQName('task-1@NN'), null);
+      assert.equal(tasker.getByQName('task-2@NN'), task2nn);
+      assert.equal(tasker.getByQName('task-3@NN'), task3nn);
+    });
+
+  });
+
+  describe('#put', function() {
+
+    it('put a task having no child', function() {
+      var filename = require.resolve('tasker/tests/tasker.mocha');
+      var tasker = new Tasker();
+      tasker._lineno = new Lineno(filename);
+
+      var task0 = tasker.put('task-0', []);
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 1);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, null);
+      assert.equal(task0.key, 'task-0');
+      assert.equal(task0._childs.length, 0);
+      assert.equal(task0.filename, filename);
+      assert.equal(task0.lineno, 208);
+      assert.equal(task0._defined[0], 1);
+    });
+
+    it('put a task having a child', function() {
+      var filename = require.resolve('tasker/tests/tasker.mocha');
+      var tasker = new Tasker();
+      tasker._lineno = new Lineno(filename);
+
+      var task0 = tasker.put('task-0', []);
+      var task1 = tasker.put('task-1', ['task-0']);
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, null);
+      assert.equal(task0.key, 'task-0');
+      assert.equal(task0._childs.length, 0);
+      assert.equal(task0.filename, filename);
+      assert.equal(task0.lineno, 232);
+      assert.equal(task0._defined[0], 1);
+      assert.equal(task1.key, 'task-1');
+      assert.equal(task1._childs.length, 1);
+      assert.equal(task1._childs[0], task0);
+      assert.equal(task1.filename, filename);
+      assert.equal(task1.lineno, 233);
+      assert.equal(task1._defined[0], 1);
+    });
+
+    it('support forward references', function() {
+      var filename = require.resolve('tasker/tests/tasker.mocha');
+      var tasker = new Tasker();
+      tasker._lineno = new Lineno(filename);
+
+      var task0 = tasker.put('task-0', ['task-1']);
+
+      var task1 = tasker._tasks.get('task-1');
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._needed.get('task-1'), task1);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, null);
+      assert.equal(task0.key, 'task-0');
+      assert.equal(task0._childs.length, 1);
+      assert.equal(task0._childs[0], task1);
+      assert.equal(task0.filename, filename);
+      assert.equal(task0.lineno, 264);
+      assert.equal(task0._defined[0], 1);
+      assert.equal(task1.key, 'task-1');
+      assert.equal(task1._childs.length, 0);
+      assert.equal(task1.filename, filename);
+      assert.equal(task1.lineno, 0);
+      assert.equal(task1._defined[0], 0);
+
+      var task11 = tasker.put('task-1', []);
+
+      assert.equal(task11, task1);
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, null);
+      assert.equal(task0.key, 'task-0');
+      assert.equal(task0._childs.length, 1);
+      assert.equal(task0._childs[0], task1);
+      assert.equal(task0.filename, filename);
+      assert.equal(task0.lineno, 264);
+      assert.equal(task0._defined[0], 1);
+      assert.equal(task1.key, 'task-1');
+      assert.equal(task1._childs.length, 0);
+      assert.equal(task1.filename, filename);
+      assert.equal(task1.lineno, 291);
+      assert.equal(task1._defined[0], 1);
+    });
+
+    it('put tasks with a same name', function() {
+      var filename = require.resolve('tasker/tests/tasker.mocha');
+      var tasker = new Tasker();
+      tasker._lineno = new Lineno(filename);
+
+      var task0 = tasker.put('task-0', []);
+      var task1 = tasker.put('task-1', ['task-0']);
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, null);
+      assert.equal(task0.key, 'task-0');
+      assert.equal(task0._childs.length, 0);
+      assert.equal(task0.filename, filename);
+      assert.equal(task0.lineno, 324);
+      assert.equal(task0._defined[0], 1);
+      assert.equal(task1.key, 'task-1');
+      assert.equal(task1._childs.length, 1);
+      assert.equal(task1._childs[0], task0);
+      assert.equal(task1.filename, filename);
+      assert.equal(task1.lineno, 325);
+      assert.equal(task1._defined[0], 1);
+
+      var task00 = tasker.put('task-0', []);
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-0'), task00);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, null);
+      assert.equal(task0.key, 'task-0');
+      assert.equal(task0._childs.length, 0);
+      assert.equal(task0.filename, filename);
+      assert.equal(task0.lineno, 324);
+      assert.equal(task0._defined[0], 2);
+      assert.equal(task1.key, 'task-1');
+      assert.equal(task1._childs.length, 1);
+      assert.equal(task1._childs[0], task0);
+      assert.equal(task1.filename, filename);
+      assert.equal(task1.lineno, 325);
+      assert.equal(task1._defined[0], 1);
+      assert.equal(task00.key, 'task-0');
+      assert.equal(task00._childs.length, 0);
+      assert.equal(task00.filename, filename);
+      assert.equal(task00.lineno, 351);
+      assert.equal(task00._defined[0], 2);
+    });
+
+    it('put tasks using a target', function() {
+      var filename = require.resolve('tasker/tests/tasker.mocha');
+      var tasker = new Tasker();
+      tasker._lineno = new Lineno(filename);
+      tasker.target = 'task-0';
+
+      var task0 = tasker.put('task-0', ['task-1']);
+
+      var task11 = tasker._tasks.get('task-1');
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task11);
+      assert.equal(tasker._needed.get('task-1'), task11);
+
+      var task1 = tasker.put('task-1', ['task-2', 'task-4']);
+
+      var task22 = tasker._tasks.get('task-2');
+      var task44 = tasker._tasks.get('task-4');
+      assert.equal(task1, task11);
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 4);
+      assert.equal(tasker._needed.size, 2);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task22);
+      assert.equal(tasker._tasks.get('task-4'), task44);
+      assert.equal(tasker._needed.get('task-2'), task22);
+      assert.equal(tasker._needed.get('task-4'), task44);
+
+      var task2 = tasker.put('task-2', []);
+      assert.equal(task2, task22);
+      assert.equal(tasker.toplevels.size, 3);
+      assert.equal(tasker._tasks.size, 4);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker._tasks.get('task-4'), task44);
+      assert.equal(tasker._needed.get('task-4'), task44);
+
+      var task3 = tasker.put('task-3', []);
+      assert.equal(tasker.toplevels.size, 4);
+      assert.equal(tasker._tasks.size, 5);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-3'), task3);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker._tasks.get('task-3'), task3);
+      assert.equal(tasker._tasks.get('task-4'), task44);
+      assert.equal(tasker._needed.get('task-4'), task44);
+
+      var task4 = tasker.put('task-4', []);
+      assert.equal(task4, task44);
+      assert.equal(tasker.toplevels.size, 5);
+      assert.equal(tasker._tasks.size, 5);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-3'), task3);
+      assert.equal(tasker.toplevels.get('task-4'), task4);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker._tasks.get('task-3'), task3);
+      assert.equal(tasker._tasks.get('task-4'), task44);
+
+      var task5 = tasker.put('task-5', []);
+      assert.equal(tasker.toplevels.size, 5);
+      assert.equal(tasker._tasks.size, 5);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-3'), task3);
+      assert.equal(tasker.toplevels.get('task-4'), task4);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker._tasks.get('task-3'), task3);
+      assert.equal(tasker._tasks.get('task-4'), task44);
+
+      var task444 = tasker.put('task-4', []);
+      assert.equal(tasker.toplevels.size, 5);
+      assert.equal(tasker._tasks.size, 5);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-3'), task3);
+      assert.equal(tasker.toplevels.get('task-4'), task4);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker._tasks.get('task-3'), task3);
+      assert.equal(tasker._tasks.get('task-4'), task4);
+      assert.equal(task4._defined[0], 2);
+    });
+
+    it('put tasks with a namespace', function() {
+      var filename = require.resolve('tasker/tests/tasker.mocha');
+      var tasker = new Tasker();
+      tasker._lineno = new Lineno(filename);
+      tasker._namespace = 'XXX';
+
+      var task0 = tasker.put('task-0', ['task-1']);
+
+      var task11 = tasker._tasks.get('task-1@XXX');
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'XXX');
+      assert.equal(tasker.target, null);
+      assert.equal(tasker.toplevels.get('task-0@XXX'), task0);
+      assert.equal(tasker._tasks.get('task-0@XXX'), task0);
+      assert.equal(tasker._tasks.get('task-1@XXX'), task11);
+      assert.equal(tasker._needed.get('task-1@XXX'), task11);
+      assert.equal(task0.key, 'task-0@XXX');
+      assert.equal(task11.key, 'task-1@XXX');
+
+      var task1 = tasker.put('task-1', []);
+
+      assert.equal(task1, task11);
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'XXX');
+      assert.equal(tasker.target, null);
+      assert.equal(tasker.toplevels.get('task-0@XXX'), task0);
+      assert.equal(tasker.toplevels.get('task-1@XXX'), task1);
+      assert.equal(tasker._tasks.get('task-0@XXX'), task0);
+      assert.equal(tasker._tasks.get('task-1@XXX'), task11);
+      assert.equal(task0.key, 'task-0@XXX');
+      assert.equal(task1.key, 'task-1@XXX');
+
+      var task111 = tasker.put('task-1', []);
+
+      assert.notEqual(task1, task111);
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'XXX');
+      assert.equal(tasker.target, null);
+      assert.equal(tasker.toplevels.get('task-0@XXX'), task0);
+      assert.equal(tasker.toplevels.get('task-1@XXX'), task1);
+      assert.equal(tasker._tasks.get('task-0@XXX'), task0);
+      assert.equal(tasker._tasks.get('task-1@XXX'), task111);
+      assert.equal(task0.key, 'task-0@XXX');
+      assert.equal(task1.key, 'task-1@XXX');
+      assert.equal(task11.key, 'task-1@XXX');
+      assert.equal(task111.key, 'task-1@XXX');
+
+      var task2 = tasker.put('task-2', ['task-1']);
+
+      assert.equal(tasker.toplevels.size, 3);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'XXX');
+      assert.equal(tasker.target, null);
+      assert.equal(tasker.toplevels.get('task-0@XXX'), task0);
+      assert.equal(tasker.toplevels.get('task-1@XXX'), task1);
+      assert.equal(tasker.toplevels.get('task-2@XXX'), task2);
+      assert.equal(tasker._tasks.get('task-0@XXX'), task0);
+      assert.equal(tasker._tasks.get('task-1@XXX'), task111);
+      assert.equal(tasker._tasks.get('task-2@XXX'), task2);
+      assert.equal(task0.key, 'task-0@XXX');
+      assert.equal(task1.key, 'task-1@XXX');
+      assert.equal(task11.key, 'task-1@XXX');
+      assert.equal(task111.key, 'task-1@XXX');
+      assert.equal(task2.key, 'task-2@XXX');
+      assert.equal(task0._childs.length, 1);
+      assert.equal(task0._childs[0], task1);
+      assert.equal(task2._childs.length, 1);
+      assert.equal(task2._childs[0], task111);
+    });
+
+    it('put tasks with a namespace using a target', function() {
+      var filename = require.resolve('tasker/tests/tasker.mocha');
+      var tasker = new Tasker();
+      tasker._lineno = new Lineno(filename);
+      tasker._namespace = 'AAA';
+      tasker.target = 'task-0@AAA';
+
+      var task0 = tasker.put('task-0', ['task-1']);
+      var task11 = tasker._tasks.get('task-1@AAA');
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.target, 'task-0@AAA');
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'AAA');
+      assert.equal(tasker.toplevels.get('task-0@AAA'), task0);
+      assert.equal(tasker._tasks.get('task-0@AAA'), task0);
+      assert.equal(tasker._tasks.get('task-1@AAA'), task11);
+      assert.equal(tasker._needed.get('task-1@AAA'), task11);
+      assert.equal(tasker.get('task-0'), task0);
+
+      var task1 = tasker.put('task-1', ['task-2', 'task-4']);
+      var task22 = tasker._tasks.get('task-2@AAA');
+      var task44 = tasker._tasks.get('task-4@AAA');
+      assert.equal(task1, task11);
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 4);
+      assert.equal(tasker._needed.size, 2);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.target, 'task-0@AAA');
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'AAA');
+      assert.equal(tasker.toplevels.get('task-0@AAA'), task0);
+      assert.equal(tasker.toplevels.get('task-1@AAA'), task1);
+      assert.equal(tasker._tasks.get('task-0@AAA'), task0);
+      assert.equal(tasker._tasks.get('task-1@AAA'), task1);
+      assert.equal(tasker._tasks.get('task-2@AAA'), task22);
+      assert.equal(tasker._tasks.get('task-4@AAA'), task44);
+      assert.equal(tasker._needed.get('task-2@AAA'), task22);
+      assert.equal(tasker._needed.get('task-4@AAA'), task44);
+      assert.equal(tasker.get('task-0'), task0);
+      assert.equal(tasker.get('task-1'), task1);
+
+      var task2 = tasker.put('task-2', []);
+      assert.equal(task2, task22);
+      assert.equal(tasker.toplevels.size, 3);
+      assert.equal(tasker._tasks.size, 4);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.target, 'task-0@AAA');
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'AAA');
+      assert.equal(tasker.toplevels.get('task-0@AAA'), task0);
+      assert.equal(tasker.toplevels.get('task-1@AAA'), task1);
+      assert.equal(tasker.toplevels.get('task-2@AAA'), task2);
+      assert.equal(tasker._tasks.get('task-0@AAA'), task0);
+      assert.equal(tasker._tasks.get('task-1@AAA'), task1);
+      assert.equal(tasker._tasks.get('task-2@AAA'), task2);
+      assert.equal(tasker._tasks.get('task-4@AAA'), task44);
+      assert.equal(tasker._needed.get('task-4@AAA'), task44);
+      assert.equal(tasker.get('task-0'), task0);
+      assert.equal(tasker.get('task-1'), task1);
+      assert.equal(tasker.get('task-2'), task2);
+
+      var task3 = tasker.put('task-3', []);
+      assert.equal(tasker.toplevels.size, 4);
+      assert.equal(tasker._tasks.size, 5);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.target, 'task-0@AAA');
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'AAA');
+      assert.equal(tasker.toplevels.get('task-0@AAA'), task0);
+      assert.equal(tasker.toplevels.get('task-1@AAA'), task1);
+      assert.equal(tasker.toplevels.get('task-2@AAA'), task2);
+      assert.equal(tasker.toplevels.get('task-3@AAA'), task3);
+      assert.equal(tasker._tasks.get('task-0@AAA'), task0);
+      assert.equal(tasker._tasks.get('task-1@AAA'), task1);
+      assert.equal(tasker._tasks.get('task-2@AAA'), task2);
+      assert.equal(tasker._tasks.get('task-3@AAA'), task3);
+      assert.equal(tasker._tasks.get('task-4@AAA'), task44);
+      assert.equal(tasker._needed.get('task-4@AAA'), task44);
+      assert.equal(tasker.get('task-0'), task0);
+      assert.equal(tasker.get('task-1'), task1);
+      assert.equal(tasker.get('task-2'), task2);
+      assert.equal(tasker.get('task-3'), task3);
+
+      var task4 = tasker.put('task-4', []);
+      assert.equal(task4, task44);
+      assert.equal(tasker.toplevels.size, 5);
+      assert.equal(tasker._tasks.size, 5);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.target, 'task-0@AAA');
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'AAA');
+      assert.equal(tasker.toplevels.get('task-0@AAA'), task0);
+      assert.equal(tasker.toplevels.get('task-1@AAA'), task1);
+      assert.equal(tasker.toplevels.get('task-2@AAA'), task2);
+      assert.equal(tasker.toplevels.get('task-3@AAA'), task3);
+      assert.equal(tasker.toplevels.get('task-4@AAA'), task4);
+      assert.equal(tasker._tasks.get('task-0@AAA'), task0);
+      assert.equal(tasker._tasks.get('task-1@AAA'), task1);
+      assert.equal(tasker._tasks.get('task-2@AAA'), task2);
+      assert.equal(tasker._tasks.get('task-3@AAA'), task3);
+      assert.equal(tasker._tasks.get('task-4@AAA'), task4);
+      assert.equal(tasker.get('task-0'), task0);
+      assert.equal(tasker.get('task-1'), task1);
+      assert.equal(tasker.get('task-2'), task2);
+      assert.equal(tasker.get('task-3'), task3);
+      assert.equal(tasker.get('task-4'), task4);
+
+      var task5 = tasker.put('task-5', []);
+      assert.equal(tasker.toplevels.size, 5);
+      assert.equal(tasker._tasks.size, 5);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.target, 'task-0@AAA');
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'AAA');
+      assert.equal(tasker.toplevels.get('task-0@AAA'), task0);
+      assert.equal(tasker.toplevels.get('task-1@AAA'), task1);
+      assert.equal(tasker.toplevels.get('task-2@AAA'), task2);
+      assert.equal(tasker.toplevels.get('task-3@AAA'), task3);
+      assert.equal(tasker.toplevels.get('task-4@AAA'), task4);
+      assert.equal(tasker._tasks.get('task-0@AAA'), task0);
+      assert.equal(tasker._tasks.get('task-1@AAA'), task1);
+      assert.equal(tasker._tasks.get('task-2@AAA'), task2);
+      assert.equal(tasker._tasks.get('task-3@AAA'), task3);
+      assert.equal(tasker._tasks.get('task-4@AAA'), task4);
+      assert.equal(tasker.get('task-0'), task0);
+      assert.equal(tasker.get('task-1'), task1);
+      assert.equal(tasker.get('task-2'), task2);
+      assert.equal(tasker.get('task-3'), task3);
+      assert.equal(tasker.get('task-4'), task4);
+    });
+
+    it('put tasks by keys which are not strings', function() {
+      var filename = require.resolve('tasker/tests/tasker.mocha');
+      var tasker = new Tasker();
+      tasker._lineno = new Lineno(filename);
+
+      var fn0 = function() {};
+      function fn1() {}
+
+      var task0 = tasker.put(fn0, [fn1]);
+      var task11 = tasker._tasks.get(fn1);
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.target, null);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.toplevels.get(fn0), task0);
+      assert.equal(tasker._tasks.get(fn0), task0);
+      assert.equal(tasker._tasks.get(fn1), task11);
+      assert.equal(tasker.get(fn0), task0);
+      assert.equal(tasker.get(fn1), null);
+      assert.equal(tasker.getByQName(fn0), task0);
+      assert.equal(tasker.getByQName(fn1), null);
+
+      var task1 = tasker.put(fn1, []);
+      assert.equal(task1, task11);
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.target, null);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.toplevels.get(fn0), task0);
+      assert.equal(tasker.toplevels.get(fn1), task1);
+      assert.equal(tasker._tasks.get(fn0), task0);
+      assert.equal(tasker._tasks.get(fn1), task1);
+      assert.equal(tasker.get(fn0), task0);
+      assert.equal(tasker.get(fn1), task1);
+      assert.equal(tasker.getByQName(fn0), task0);
+      assert.equal(tasker.getByQName(fn1), task1);
+    });
+
+    it('put tasks by keys which are not strings with a namespace', function() {
+      var filename = require.resolve('tasker/tests/tasker.mocha');
+      var tasker = new Tasker();
+      tasker._lineno = new Lineno(filename);
+      tasker._namespace = 'AAA';
+
+      var fn0 = function() {};
+      function fn1() {}
+
+      var task0 = tasker.put(fn0, [fn1]);
+      var task11 = tasker._tasks.get(fn1);
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.target, null);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'AAA');
+      assert.equal(tasker.toplevels.get(fn0), task0);
+      assert.equal(tasker._tasks.get(fn0), task0);
+      assert.equal(tasker._tasks.get(fn1), task11);
+      assert.equal(tasker.get(fn0), task0);
+      assert.equal(tasker.get(fn1), null);
+      assert.equal(tasker.getByQName(fn0), task0);
+      assert.equal(tasker.getByQName(fn1), null);
+
+      var task1 = tasker.put(fn1, []);
+      assert.equal(task1, task11);
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker.target, null);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, 'AAA');
+      assert.equal(tasker.toplevels.get(fn0), task0);
+      assert.equal(tasker.toplevels.get(fn1), task1);
+      assert.equal(tasker._tasks.get(fn0), task0);
+      assert.equal(tasker._tasks.get(fn1), task1);
+      assert.equal(tasker.get(fn0), task0);
+      assert.equal(tasker.get(fn1), task1);
+      assert.equal(tasker.getByQName(fn0), task0);
+      assert.equal(tasker.getByQName(fn1), task1);
+    });
+
+  });
+
+  it('#onPut', function() {
+    var filename = require.resolve('tasker/tests/tasker.mocha');
+    var tasker = new Tasker();
+    tasker._lineno = new Lineno(filename);
+
+    tasker.onPut = function(task, displayName) {
+      task.displayName = displayName;
+    };
+
+    var task0 = tasker.put('task-0', [], 'Task #0');
+    assert.equal(task0.key, 'task-0');
+    assert.equal(task0.displayName, 'Task #0');
+  });
+
+  describe('#load', function() {
+
+    it('load', function() {
+      var tasker = require('tasker/tests/tasker/a.js');
+      var filename = require.resolve('tasker/tests/tasker/b.js');
+      tasker._lineno = new Lineno(filename);
+
+      assert.equal(tasker.toplevels.size, 0);
+      assert.equal(tasker._tasks.size, 0);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+
+      var task0 = tasker.put('task-0', ['task-1']);
+      var task1 = tasker._tasks.get('task-1');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._needed.get('task-1'), task1);
+
+      tasker.load('./a0.js');
+      var file_a0 = require.resolve('tasker/tests/tasker/a0.js');
+      var task2 = tasker._tasks.get('task-2');
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 1);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker._needed.get('task-2'), task2);
+      assert.equal(tasker._loaded.get(file_a0).filename, file_a0);
+      assert.equal(tasker._loaded.get(file_a0).namespace, null);
+
+      tasker.put('task-2', []);
+      assert.equal(tasker.toplevels.size, 3);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 1);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker._loaded.get(file_a0).filename, file_a0);
+      assert.equal(tasker._loaded.get(file_a0).namespace, null);
+
+      tasker.load('./a1.js');
+      var file_a1 = require.resolve('tasker/tests/tasker/a1.js');
+      var task3 = tasker._tasks.get('task-3');
+
+      assert.equal(tasker.toplevels.size, 4);
+      assert.equal(tasker._tasks.size, 4);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 2);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker._tasks.get('task-3'), task3);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-3'), task3);
+      assert.equal(tasker._loaded.get(file_a0).filename, file_a0);
+      assert.equal(tasker._loaded.get(file_a0).namespace, null);
+      assert.equal(tasker._loaded.get(file_a1).filename, file_a1);
+      assert.equal(tasker._loaded.get(file_a1).namespace, null);
+
+      tasker.load('./a1.js');
+
+      assert.equal(tasker.toplevels.size, 4);
+      assert.equal(tasker._tasks.size, 4);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 2);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker._tasks.get('task-3'), task3);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-3'), task3);
+      assert.equal(tasker._loaded.get(file_a0).filename, file_a0);
+      assert.equal(tasker._loaded.get(file_a0).namespace, null);
+      assert.equal(tasker._loaded.get(file_a1).filename, file_a1);
+      assert.equal(tasker._loaded.get(file_a1).namespace, null);
+    });
+
+    it('load using a target', function() {
+      var tasker = require('tasker/tests/tasker/b.js');
+      var filename = require.resolve('tasker/tests/tasker/b.js');
+      tasker._lineno = new Lineno(filename);
+      tasker.target = 'task-0';
+
+      assert.equal(tasker.toplevels.size, 0);
+      assert.equal(tasker._tasks.size, 0);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+
+      var task0 = tasker.put('task-0', ['task-1']);
+      var task1 = tasker._tasks.get('task-1');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._needed.get('task-1'), task1);
+
+      tasker.load('./b0.js');
+      var file_b0 = require.resolve('tasker/tests/tasker/b0.js');
+      var task2 = tasker._tasks.get('task-2');
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 1);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker._needed.get('task-2'), task2);
+      assert.equal(tasker._loaded.get(file_b0).filename, file_b0);
+      assert.equal(tasker._loaded.get(file_b0).namespace, null);
+
+      tasker.put('task-2', []);
+      assert.equal(tasker.toplevels.size, 3);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 1);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker._loaded.get(file_b0).filename, file_b0);
+      assert.equal(tasker._loaded.get(file_b0).namespace, null);
+
+      tasker.load('./b1.js');
+      var file_b1 = require.resolve('tasker/tests/tasker/b1.js');
+      var task3 = tasker._tasks.get('task-3');
+
+      assert.equal(tasker.toplevels.size, 3);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 1);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker._loaded.get(file_b0).filename, file_b0);
+      assert.equal(tasker._loaded.get(file_b0).namespace, null);
+
+      tasker.load('./b1.js');
+
+      assert.equal(tasker.toplevels.size, 3);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 1);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker._loaded.get(file_b0).filename, file_b0);
+      assert.equal(tasker._loaded.get(file_b0).namespace, null);
+    });
+
+    it('load with namespace using a target', function() {
+      var tasker = require('tasker/tests/tasker/d.js');
+      var filename = require.resolve('tasker/tests/tasker/d.js');
+      tasker._lineno = new Lineno(filename);
+      tasker.target = 'task-0';
+
+      assert.equal(tasker.toplevels.size, 0);
+      assert.equal(tasker._tasks.size, 0);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+
+      var task0 = tasker.put('task-0', ['task-1@D1']);
+      var task1d1 = tasker._tasks.get('task-1@D1');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1@D1'), task1d1);
+      assert.equal(tasker._needed.get('task-1@D1'), task1d1);
+
+      tasker.load('./d0.js', 'D0');
+      var file_d0 = require.resolve('tasker/tests/tasker/d0.js');
+      var task1d0 = tasker._tasks.get('task-1@D0');
+      var task2d0 = tasker._tasks.get('task-2@D0');
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 4);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 1);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1@D0'), task1d0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1@D1'), task1d1);
+      assert.equal(tasker._tasks.get('task-1@D0'), task1d0);
+      assert.equal(tasker._tasks.get('task-2@D0'), task2d0);
+      assert.equal(tasker._needed.get('task-1@D1'), task1d1);
+      assert.equal(tasker._loaded.get(file_d0 + ';D0').filename, file_d0);
+      assert.equal(tasker._loaded.get(file_d0 + ';D0').namespace, 'D0');
+
+      tasker.load('./d1.js', 'D1');
+      var file_d1 = require.resolve('tasker/tests/tasker/d1.js');
+      var task2d1 = tasker._tasks.get('task-2@D1');
+      var task1d0d1 = tasker._tasks.get('task-1@D0@D1');
+      var task2d0d1 = tasker._tasks.get('task-2@D0@D1');
+
+      assert.equal(tasker.toplevels.size, 4);
+      assert.equal(tasker._tasks.size, 7);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 3);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1@D0'), task1d0);
+      assert.equal(tasker.toplevels.get('task-1@D0@D1'), task1d0d1);
+      assert.equal(tasker.toplevels.get('task-2@D1'), task2d1);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1@D0'), task1d0);
+      assert.equal(tasker._tasks.get('task-1@D1'), task1d1);
+      assert.equal(tasker._tasks.get('task-1@D0@D1'), task1d0d1);
+      assert.equal(tasker._tasks.get('task-2@D0'), task2d0);
+      assert.equal(tasker._tasks.get('task-2@D1'), task2d1);
+      assert.equal(tasker._tasks.get('task-2@D0@D1'), task2d0d1);
+      assert.equal(tasker._needed.get('task-1@D1'), task1d1);
+      assert.equal(tasker._loaded.get(file_d0 + ';D0').filename, file_d0);
+      assert.equal(tasker._loaded.get(file_d0 + ';D0').namespace, 'D0');
+      assert.equal(tasker._loaded.get(file_d1 + ';D1').filename, file_d1);
+      assert.equal(tasker._loaded.get(file_d1 + ';D1').namespace, 'D1');
+      assert.equal(tasker._loaded.get(file_d0 + ';D0;D1').filename, file_d0);
+      assert.equal(tasker._loaded.get(file_d0 + ';D0;D1').namespace, 'D0');
+
+      tasker.load('./d1.js', 'D1');
+
+      assert.equal(tasker.toplevels.size, 4);
+      assert.equal(tasker._tasks.size, 7);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 3);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1@D0'), task1d0);
+      assert.equal(tasker.toplevels.get('task-1@D0@D1'), task1d0d1);
+      assert.equal(tasker.toplevels.get('task-2@D1'), task2d1);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1@D0'), task1d0);
+      assert.equal(tasker._tasks.get('task-1@D1'), task1d1);
+      assert.equal(tasker._tasks.get('task-1@D0@D1'), task1d0d1);
+      assert.equal(tasker._tasks.get('task-2@D0'), task2d0);
+      assert.equal(tasker._tasks.get('task-2@D1'), task2d1);
+      assert.equal(tasker._tasks.get('task-2@D0@D1'), task2d0d1);
+      assert.equal(tasker._needed.get('task-1@D1'), task1d1);
+      assert.equal(tasker._loaded.get(file_d0 + ';D0').filename, file_d0);
+      assert.equal(tasker._loaded.get(file_d0 + ';D0').namespace, 'D0');
+      assert.equal(tasker._loaded.get(file_d1 + ';D1').filename, file_d1);
+      assert.equal(tasker._loaded.get(file_d1 + ';D1').namespace, 'D1');
+      assert.equal(tasker._loaded.get(file_d0 + ';D0;D1').filename, file_d0);
+      assert.equal(tasker._loaded.get(file_d0 + ';D0;D1').namespace, 'D0');
+    });
+
+  });
+
+  describe('#loadLater', function() {
+
+    it('loadLater', function() {
+      var tasker = require('tasker/tests/tasker/aa.js');
+      var filename = require.resolve('tasker/tests/tasker/aa.js');
+      tasker._lineno = new Lineno(filename);
+
+      assert.equal(tasker.toplevels.size, 0);
+      assert.equal(tasker._tasks.size, 0);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+
+      var task0 = tasker.put('task-0', ['task-1']);
+      var task1 = tasker._tasks.get('task-1');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._needed.get('task-1'), task1);
+
+      tasker.loadLater('./aa0.js');
+      var file_aa0 = require.resolve('tasker/tests/tasker/aa0.js');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 1);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._needed.get('task-1'), task1);
+      assert.equal(tasker._willLoad.get(file_aa0).filename, file_aa0);
+      assert.equal(tasker._willLoad.get(file_aa0).namespace, null);
+
+      var task2 = tasker.put('task-2', []);
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 1);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker._needed.get('task-1'), task1);
+      assert.equal(tasker._willLoad.get(file_aa0).filename, file_aa0);
+      assert.equal(tasker._willLoad.get(file_aa0).namespace, null);
+
+      tasker.loadLater('./aa1.js');
+      var file_aa1 = require.resolve('tasker/tests/tasker/aa1.js');
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 2);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker._needed.get('task-1'), task1);
+      assert.equal(tasker._willLoad.get(file_aa0).filename, file_aa0);
+      assert.equal(tasker._willLoad.get(file_aa0).namespace, null);
+      assert.equal(tasker._willLoad.get(file_aa1).filename, file_aa1);
+      assert.equal(tasker._willLoad.get(file_aa1).namespace, null);
+
+      tasker.loadLater('./aa1.js');
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 2);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker._needed.get('task-1'), task1);
+      assert.equal(tasker._willLoad.get(file_aa0).filename, file_aa0);
+      assert.equal(tasker._willLoad.get(file_aa0).namespace, null);
+      assert.equal(tasker._willLoad.get(file_aa1).filename, file_aa1);
+      assert.equal(tasker._willLoad.get(file_aa1).namespace, null);
+
+      tasker.lateLoad();
+
+      var task3 = tasker._tasks.get('task-3');
+      assert.equal(tasker.toplevels.size, 4);
+      assert.equal(tasker._tasks.size, 4);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 2);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker._tasks.get('task-3'), task3);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-3'), task3);
+      assert.equal(tasker._loaded.get(file_aa0).filename, file_aa0);
+      assert.equal(tasker._loaded.get(file_aa0).namespace, null);
+      assert.equal(tasker._loaded.get(file_aa1).filename, file_aa1);
+      assert.equal(tasker._loaded.get(file_aa1).namespace, null);
+    });
+
+    it('loadLater using a target', function() {
+      var tasker = require('tasker/tests/tasker/bb.js');
+      var filename = require.resolve('tasker/tests/tasker/bb.js');
+      tasker._lineno = new Lineno(filename);
+      tasker.target = 'task-0';
+
+      assert.equal(tasker.toplevels.size, 0);
+      assert.equal(tasker._tasks.size, 0);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+
+      var task0 = tasker.put('task-0', ['task-1']);
+      var task1 = tasker._tasks.get('task-1');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._needed.get('task-1'), task1);
+
+      tasker.loadLater('./bb0.js');
+      var file_bb0 = require.resolve('tasker/tests/tasker/bb0.js');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 1);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._needed.get('task-1'), task1);
+      assert.equal(tasker._willLoad.get(file_bb0).filename, file_bb0);
+      assert.equal(tasker._willLoad.get(file_bb0).namespace, null);
+
+      var task2 = tasker.put('task-2', []);
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 1);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._willLoad.get(file_bb0).filename, file_bb0);
+      assert.equal(tasker._willLoad.get(file_bb0).namespace, null);
+
+      tasker.loadLater('./bb1.js');
+      var file_bb1 = require.resolve('tasker/tests/tasker/bb1.js');
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 2);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker._needed.get('task-1'), task1);
+      assert.equal(tasker._willLoad.get(file_bb0).filename, file_bb0);
+      assert.equal(tasker._willLoad.get(file_bb0).namespace, null);
+      assert.equal(tasker._willLoad.get(file_bb1).filename, file_bb1);
+      assert.equal(tasker._willLoad.get(file_bb1).namespace, null);
+
+      tasker.loadLater('./bb1.js');
+
+      assert.equal(tasker.toplevels.size, 2);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 2);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+      assert.equal(tasker._needed.get('task-1'), task1);
+      assert.equal(tasker._willLoad.get(file_bb0).filename, file_bb0);
+      assert.equal(tasker._willLoad.get(file_bb0).namespace, null);
+      assert.equal(tasker._willLoad.get(file_bb1).filename, file_bb1);
+      assert.equal(tasker._willLoad.get(file_bb1).namespace, null);
+
+      tasker.lateLoad();
+
+      var task3 = tasker._tasks.get('task-3');
+      assert.equal(tasker.toplevels.size, 3);
+      assert.equal(tasker._tasks.size, 3);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 1);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1'), task1);
+      assert.equal(tasker._tasks.get('task-2'), task2);
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1'), task1);
+      assert.equal(tasker.toplevels.get('task-2'), task2);
+    });
+
+    it('loadLater with namespace using a target', function() {
+      var tasker = require('tasker/tests/tasker/dd.js');
+      var filename = require.resolve('tasker/tests/tasker/dd.js');
+      tasker._lineno = new Lineno(filename);
+      tasker.target = 'task-0';
+
+      assert.equal(tasker.toplevels.size, 0);
+      assert.equal(tasker._tasks.size, 0);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+
+      var task0 = tasker.put('task-0', ['task-1@D1']);
+      var task1d1 = tasker._tasks.get('task-1@D1');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1@D1'), task1d1);
+      assert.equal(tasker._needed.get('task-1@D1'), task1d1);
+
+      tasker.loadLater('./dd0.js', 'D0');
+      var file_dd0 = require.resolve('tasker/tests/tasker/dd0.js');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 1);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1@D1'), task1d1);
+      assert.equal(tasker._needed.get('task-1@D1'), task1d1);
+      assert.equal(tasker._willLoad.get(file_dd0 + ';D0').filename, file_dd0);
+      assert.equal(tasker._willLoad.get(file_dd0 + ';D0').namespace, 'D0');
+
+      tasker.loadLater('./dd1.js', 'D1');
+      var file_dd1 = require.resolve('tasker/tests/tasker/dd1.js');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 2);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1@D1'), task1d1);
+      assert.equal(tasker._needed.get('task-1@D1'), task1d1);
+      assert.equal(tasker._willLoad.get(file_dd0 + ';D0').filename, file_dd0);
+      assert.equal(tasker._willLoad.get(file_dd0 + ';D0').namespace, 'D0');
+      assert.equal(tasker._willLoad.get(file_dd1 + ';D1').filename, file_dd1);
+      assert.equal(tasker._willLoad.get(file_dd1 + ';D1').namespace, 'D1');
+
+      tasker.loadLater('./dd1.js', 'D1');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 2);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 2);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1@D1'), task1d1);
+      assert.equal(tasker._needed.get('task-1@D1'), task1d1);
+      assert.equal(tasker._willLoad.get(file_dd0 + ';D0').filename, file_dd0);
+      assert.equal(tasker._willLoad.get(file_dd0 + ';D0').namespace, 'D0');
+      assert.equal(tasker._willLoad.get(file_dd1 + ';D1').filename, file_dd1);
+      assert.equal(tasker._willLoad.get(file_dd1 + ';D1').namespace, 'D1');
+
+      tasker.lateLoad();
+
+      var task1d0 = tasker._tasks.get('task-1@D0');
+      var task2d0 = tasker._tasks.get('task-2@D0');
+      var task2d1 = tasker._tasks.get('task-2@D1');
+      var task1d0d1 = tasker._tasks.get('task-1@D0@D1');
+      var task2d0d1 = tasker._tasks.get('task-2@D0@D1');
+
+      assert.equal(tasker.toplevels.size, 4);
+      assert.equal(tasker._tasks.size, 7);
+      assert.equal(tasker._needed.size, 1);
+      assert.equal(tasker._loaded.size, 3);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker.toplevels.get('task-1@D0'), task1d0);
+      assert.equal(tasker.toplevels.get('task-1@D0@D1'), task1d0d1);
+      assert.equal(tasker.toplevels.get('task-2@D1'), task2d1);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-1@D0'), task1d0);
+      assert.equal(tasker._tasks.get('task-1@D1'), task1d1);
+      assert.equal(tasker._tasks.get('task-1@D0@D1'), task1d0d1);
+      assert.equal(tasker._tasks.get('task-2@D0'), task2d0);
+      assert.equal(tasker._tasks.get('task-2@D1'), task2d1);
+      assert.equal(tasker._tasks.get('task-2@D0@D1'), task2d0d1);
+      assert.equal(tasker._needed.get('task-1@D1'), task1d1);
+      assert.equal(tasker._loaded.get(file_dd0 + ';D0').filename, file_dd0);
+      assert.equal(tasker._loaded.get(file_dd0 + ';D0').namespace, 'D0');
+      assert.equal(tasker._loaded.get(file_dd1 + ';D1').filename, file_dd1);
+      assert.equal(tasker._loaded.get(file_dd1 + ';D1').namespace, 'D1');
+      assert.equal(tasker._loaded.get(file_dd0 + ';D0;D1').filename, file_dd0);
+      assert.equal(tasker._loaded.get(file_dd0 + ';D0;D1').namespace, 'D0');
+    });
+
+    it('loadLater but already finished', function() { 
+      var tasker = require('tasker/tests/tasker/cc.js');
+      var filename = require.resolve('tasker/tests/tasker/cc.js');
+      tasker._lineno = new Lineno(filename);
+      tasker.target = 'task-0';
+
+      assert.equal(tasker.toplevels.size, 0);
+      assert.equal(tasker._tasks.size, 0);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+
+      var task0 = tasker.put('task-0', []);
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 1);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+
+      tasker.loadLater('./cc0.js');
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 1);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+
+      tasker.lateLoad();
+
+      assert.equal(tasker.toplevels.size, 1);
+      assert.equal(tasker._tasks.size, 1);
+      assert.equal(tasker._needed.size, 0);
+      assert.equal(tasker._loaded.size, 0);
+      assert.equal(tasker._willLoad.size, 0);
+      assert.equal(tasker._lineno.filename, filename);
+      assert.equal(tasker._namespace, null);
+      assert.equal(tasker.target, 'task-0');
+      assert.equal(tasker.toplevels.get('task-0'), task0);
+      assert.equal(tasker._tasks.get('task-0'), task0);
+    });
+  });
+
+});
+

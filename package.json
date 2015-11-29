@@ -22,6 +22,7 @@
   "devDependencies": {
     "gulp": "^3.9.0",
     "gulp-jshint": "^2.0.0",
+    "gulp-mocha": "^2.2.0",
     "gulp-showhelp": "^1.0.3",
     "gulp-tarte-jsunit": "^0.2.1",
     "jshint": "^2.8.0",

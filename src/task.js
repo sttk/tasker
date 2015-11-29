@@ -2,9 +2,9 @@
 
 var WeakMap = (WeakMap) ? WeakMap : require('es6-weak-map');
 
-var Task = function(name, childs, filename, lineno) {
-  function Constructor(name, childs, filename, lineno) {
-    this.name = name;
+var Task = function(key, childs, filename, lineno) {
+  function Constructor(key, childs, filename, lineno) {
+    this.key = key;
     this._childs = childs;
     this.filename = filename;
     this.lineno = lineno;
@@ -12,7 +12,7 @@ var Task = function(name, childs, filename, lineno) {
   }
 
   function CopyConstructor(task, childs, filename, lineno) {
-    this.name = task.name;
+    this.key = task.key;
     this._childs = childs;
     this.filename = filename;
     this.lineno = lineno;
@@ -20,12 +20,13 @@ var Task = function(name, childs, filename, lineno) {
     this._defined[0] ++;
   }
 
-  if (typeof(name) === 'string') {
-    Constructor.prototype = Task.prototype;
-    return new Constructor(name, childs, filename, lineno);
-  } else {
+  if (typeof(key) === 'object' &&
+      key.forEachChild === Task.prototype.forEachChild) {
     CopyConstructor.prototype = Task.prototype;
-    return new CopyConstructor(name, childs, filename, lineno);
+    return new CopyConstructor(key, childs, filename, lineno);
+  } else {
+    Constructor.prototype = Task.prototype;
+    return new Constructor(key, childs, filename, lineno);
   }
 };
 

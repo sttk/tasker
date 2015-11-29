@@ -5,7 +5,7 @@ var ghelp = require('gulp-showhelp');
 var jshint = require('gulp-jshint');
 var stylish = require('jshint-stylish');
 var mapstream = require('map-stream');
-var jsunit = require('gulp-tarte-jsunit');
+var mocha = require('gulp-mocha');
 var fs = require('fs');
 
 
@@ -15,38 +15,29 @@ gulp.task('help', function() {
   ghelp.show();
 }).help = 'shows a help message.';
 
-var srcs = ['src/*.js', 'src/lib/*.js'];
-
-gulp.task('lint', function(done) {
+gulp.task('lint', function() {
   function jshintMapper(data, cb) {
     cb(data.jshint.success ? null : new Error(), data);
   }
-  gulp.src(srcs)
+  gulp.src('src/*.js')
     .pipe(jshint())
     .pipe(jshint.reporter(stylish))
     .pipe(mapstream(jshintMapper))
-    .on('error', function() {})
-    .on('end', done);
-});
+    .on('error', function() { this.emit('end'); });
+}).help = 'lints source files.';
 
-gulp.task('lint-for-test', function(done) {
-  var js = ghelp.getArgv('js');
-  if (js == null) {
-    console.log("!ERROR: The option 'js' should be specified js path.");
-    return;
-  }
+gulp.task('lint-for-test', function() {
   function jshintMapper(data, cb) {
     cb(data.jshint.success ? null : new Error(), data);
   }
-  gulp.src(js)
+  gulp.src('tests/*.mocha')
     .pipe(jshint())
     .pipe(jshint.reporter(stylish))
     .pipe(mapstream(jshintMapper))
-    .on('error', function() {})
-    .on('end', done);
+    .on('error', function() { this.emit('end'); });
 });
 
-gulp.task('test', [ 'lint', 'lint-for-test' ], function(done) {
+gulp.task('test', ['lint', 'lint-for-test'], function() {
   var slink = './node_modules/tasker';
   if (! fs.existsSync(slink)) {
     fs.symlink('..', './node_modules/tasker', function(e) {
@@ -54,20 +45,11 @@ gulp.task('test', [ 'lint', 'lint-for-test' ], function(done) {
       return;
     });
   }
-  var js = ghelp.getArgv('js');
-  if (js == null) {
-    console.log("!ERROR: The option 'js' should be specified js path.");
-    return;
-  }
-  var json = ghelp.getArgv('report-file');
-  if (json == null) {
-    var exit = function() { process.exit(1); }
-    jsunit.run(js, {pass:done, fail:exit, rterr:exit, pgerr:exit});
-  } else {
-    jsunit.run(js, done);
-  }
-}).help = {
-  '': 'runs a js code for test.',
-  '--js=file': 'specifys a js path containing a unit test code.',
-  '[ --report-file=file ]': 'specifys a path of a report file.'
-};
+  gulp.src('tests/*.mocha', {read:false})
+    .pipe(mocha())
+    .on('error', function() { this.emit('end'); });
+}).help = 'run mocha tests.'
+
+gulp.task('watch-test', function() {
+  gulp.watch(['src/**', 'tests/**'], ['test']);
+});

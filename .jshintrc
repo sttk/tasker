@@ -9,6 +9,8 @@
   "expr"     : true,
 
   "globals"  : {
-    "testsuite" : false
+    "testsuite" : false,
+    "describe" : false,
+    "it" : false
   }
 }

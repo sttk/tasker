@@ -8,11 +8,11 @@ var Map = (Map) ? Map : require('es6-map');
 
 var Tasker = function() {
   function Constructor() {
-    this.toplevels = {};
+    this.toplevels = new Map();
     this.target = null;
-    this._tasks = {};
-    this._needed = {};
-    this._loaded = {};
+    this._tasks = new Map();
+    this._needed = new Map();
+    this._loaded = new Map();
     this._willLoad = new Map();
     this._lineno = new Lineno(path.resolve(process.argv[1]));
     this._namespace = null;
@@ -23,33 +23,36 @@ var Tasker = function() {
 
 Tasker.prototype = new function() {
   this.clear = function() {
-    this._tasks = {};
-    this.toplevels = {};
-    this._needed = {};
-    this._loaded = {};
+    this.toplevels.clear();
+    this.target = null;
+    this._tasks.clear();
+    this._needed.clear();
+    this._loaded.clear();
     this._willLoad.clear();
     this._lineno = new Lineno(path.resolve(process.argv[1]));
     this._namespace = null;
-    this.target = null;
   };
 
-  this.get = function(name) {
-    return this.toplevels[this.generateQName(name, this._namespace)];
+  this.get = function(key) {
+    return this.toplevels.get(generateQKey(this, key));
   };
 
   this.getByQName = function(qname) {
-    return this.toplevels[qname];
+    return this.toplevels.get(qname);
   };
 
-  this.entry = function(name, childNames) {
-    if (isFinished(this)) { return createEmptyTask(this, name); }
+  this.put = function(key, childNames) {
+    if (isFinished(this)) {
+      dontCreateTaskButCountUpDefined(this, key);
+      return emptyTask;
+    }
 
     var childs = createChilds(this, childNames);
-    var task = createTask(this, name, childs);
+    var task = createTask(this, key, childs);
 
-    if (typeof(this.onEntry) === 'function') {
+    if (typeof(this.onPut) === 'function') {
       var args = [].slice.call(arguments, 2);
-      this.onEntry.apply(this, [task].concat(args));
+      this.onPut.apply(this, [task].concat(args));
     }
 
     return task;
@@ -59,16 +62,15 @@ Tasker.prototype = new function() {
     if (isFinished(this)) { return; }
 
     filename = resolvePath(this, filename);
-    var ns = this.generateQName(namespace, this._namespace);
-    var key = this.generateQName(filename, ns);
-    if (key in this._loaded) { return; }
-    this._willLoad.delete(key);
-    this._loaded[key] = {filename:filename, namespace:namespace};
+    var qpath = generateQPath(this, filename, namespace);
+    if (this._loaded.has(qpath)) { return; }
+    this._willLoad.delete(qpath);
+    this._loaded.set(qpath, {filename:filename, namespace:namespace});
 
     var prevLno = this._lineno;
     var prevNs = this._namespace;
     this._lineno = new Lineno(filename);
-    this._namespace = ns;
+    this._namespace = generateNamespace(this, namespace);
     requireWithoutCache(filename);
     this._lineno = prevLno;
     this._namespace = prevNs;
@@ -78,103 +80,126 @@ Tasker.prototype = new function() {
     if (isFinished(this)) { return; }
 
     filename = resolvePath(this, filename);
-    var ns = this.generateQName(namespace, this._namespace);
-    var key = this.generateQName(filename, ns);
-    if (this._willLoad.has(key)) { return; }
-    this._willLoad.set(key, {filename:filename, namespace:namespace});
-  };
-
-  this.generateQName = function(name, namespace) {
-    if (typeof(name) === 'string' && name.length > 0) {
-      if (typeof(namespace) === 'string' && namespace.length > 0) {
-        return name + '@' + namespace;
-      }
-      return name;
-    }
-    if (typeof(namespace) === 'string' && namespace.length > 0) {
-      return namespace;
-    }
-    return '';
+    var qpath = generateQPath(this, filename, namespace);
+    if (this._willLoad.has(qpath)) { return; }
+    this._willLoad.set(qpath, {filename:filename, namespace:namespace});
   };
 
   this.lateLoad = function() {
     var self = this;
-    self._willLoad.forEach(function(value, key) {
+    self._willLoad.forEach(function(value) {
       self.load(value.filename, value.namespace);
     });
     self._willLoad.clear();
   };
 
-  function createChilds(tasker, names) {
+  this.generateQName = function(name, namespace) {
+    return name + '@' + namespace;
+  };
+
+  function generateNamespace(tasker, namespace) {
+    if (namespace) {
+      if (tasker._namespace) {
+        return tasker.generateQName(namespace, tasker._namespace);
+      } else {
+        return namespace;
+      }
+    } else {
+      return tasker._namespace;
+    }
+  }
+
+  function generateQKey(tasker, key, namespace) {
+    if (typeof(key) === 'string') {
+      if (namespace) {
+        key = tasker.generateQName(key, namespace);
+      }
+      if (tasker._namespace) {
+        key = tasker.generateQName(key, tasker._namespace);
+      }
+      return key;
+    } else {
+      return key;
+    }
+  }
+
+  function generateQPath(tasker, path, namespace) {
+    if (namespace) {
+      path += ';' + namespace;
+    }
+    if (tasker._namespace) {
+      path += ';' + tasker._namespace;
+    }
+    return path;
+  }
+
+  function createChilds(tasker, keys) {
     var childs = [];
-    for (var i=0, n=names.length; i<n; i++) {
-      var qname = tasker.generateQName(names[i], tasker._namespace);
-      var task = tasker._tasks[qname];
+    for (var i=0, n=keys.length; i<n; i++) {
+      var qkey = generateQKey(tasker, keys[i]);
+      var task = tasker._tasks.get(qkey);
       if (!task) {
-        task = new Task(qname, [], tasker._lineno.filename, 0);
-        tasker._tasks[qname] = task;
-        if (!tasker.target) { tasker._needed[qname] = task; }
+        task = new Task(qkey, [], tasker._lineno.filename, 0);
+        tasker._tasks.set(qkey, task);
+        if (tasker.target == null) { tasker._needed.set(qkey, task); }
       }
       childs.push(task);
     }
     return childs;
   }
 
-  function collectNeededForTarget(tasker, qname) {
-    if (!tasker.target) { return; }
-
-    if (qname === tasker.target || qname in tasker._needed) {
-      var task = tasker._tasks[qname];
-      task.forEachDescendant(function(each) {
-        if (each.element._defined[0] === 0) {
-          tasker._needed[each.element.name] = each.element;
-        }
-      });
-    }
-  }
-
-  function createTask(tasker, name, childs) {
-    var qname = tasker.generateQName(name, tasker._namespace);
+  function createTask(tasker, key, childs) {
+    var qkey = generateQKey(tasker, key);
     var lineno = tasker._lineno;
 
-    var task = tasker._tasks[qname];
+    var task = tasker._tasks.get(qkey);
     if (!task) {
-      task = new Task(qname, childs, lineno.filename, lineno.get());
-      tasker._tasks[qname] = task;
-      tasker.toplevels[qname] = task;
+      task = new Task(qkey, childs, lineno.filename, lineno.get());
+      tasker._tasks.set(qkey, task);
+      tasker.toplevels.set(qkey, task);
       task._defined[0] = 1;
-      collectNeededForTarget(tasker, qname);
+      if (tasker.target != null && qkey === tasker.target) {
+        task.forEachDescendant(function(each) {
+          var t = each.element;
+          if (t._defined[0] === 0) { tasker._needed.set(t.key, t); }
+        });
+      }
     }
     else if (task._defined[0] === 0) {
       task._childs = childs;
+      tasker.toplevels.set(qkey, task);
       task.filename = lineno.filename;
       task.lineno = lineno.get();
       task._defined[0] = 1;
-      tasker.toplevels[qname] = task;
-      collectNeededForTarget(tasker, qname);
-      delete tasker._needed[qname];
+      if (tasker.target != null && tasker._needed.has(qkey)) {
+        task.forEachDescendant(function(each) {
+          var t = each.element;
+          if (t._defined[0] === 0) { tasker._needed.set(t.key, t); }
+        });
+      }
+      tasker._needed.delete(qkey);
     }
     else {
       task = new Task(task, childs, lineno.filename, lineno.get());
-      tasker._tasks[qname] = task;
+      tasker._tasks.set(qkey, task);
     }
     return task;
   }
 
   function isFinished(tasker) {
-    if (!tasker.target) { return false; }
-    if (!(tasker.target in tasker.toplevels)) { return false; }
-    if (Object.keys(tasker._needed).length > 0) { return false; }
+    if (tasker.target == null) { return false; }
+    if (!tasker.toplevels.has(tasker.target)) { return false; }
+    if (tasker._needed.size > 0) { return false; }
     return true;
   }
 
-  var emptyTask = new Task('', []);
-  function createEmptyTask(tasker, name) {
-    var qname = tasker.generateQName(name, tasker._namespace);
-    var task = tasker._tasks[qname];
+  function dontCreateTaskButCountUpDefined(tasker, key) {
+    var qkey = generateQKey(tasker, key);
+    var task = tasker._tasks.get(qkey);
     if (task && task._defined[0] > 0) { task._defined[0] ++; }
-    return emptyTask;
   }
+
+  var emptyTask = new Task('', []);
 
   function resolvePath(tasker, filename) {
     if (filename[0] !== '.') {
