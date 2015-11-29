@@ -22,10 +22,10 @@ testsuite('Test of Tasker', function() {
   this.testcase('#clear', {
     run:function() {
       var tasker = new Tasker();
-      var task0 = new Task('task0', []);
-      tasker._tasks[task0.name] = task0;
-      tasker.toplevels[task0.name] = task0;
-      tasker._needed[task0.name] = task0;
+      var task0 = new Task('task-0', []);
+      tasker._tasks['task-0'] = task0;
+      tasker.toplevels['task-0'] = task0;
+      tasker._needed['task-0'] = task0;
       tasker._loaded[__filename] = true;
       tasker._willLoad.set('kkk', {filename:__filename,namespace:'xxx'});
       tasker._lineno = new Lineno('aaa');
@@ -37,9 +37,9 @@ testsuite('Test of Tasker', function() {
       this.equal(Object.keys(tasker._needed).length, 1);
       this.equal(Object.keys(tasker._loaded).length, 1);
       this.equal(tasker._willLoad.size, 1);
-      this.equal(tasker._tasks[task0.name], task0);
-      this.equal(tasker.toplevels[task0.name], task0);
-      this.equal(tasker._needed[task0.name], task0);
+      this.equal(tasker._tasks['task-0'], task0);
+      this.equal(tasker.toplevels['task-0'], task0);
+      this.equal(tasker._needed['task-0'], task0);
       this.equal(tasker._loaded[__filename], true);
       this.equal(tasker._willLoad.get('kkk').filename, __filename);
       this.equal(tasker._willLoad.get('kkk').namespace, 'xxx');
@@ -58,36 +58,135 @@ testsuite('Test of Tasker', function() {
       this.isNull(tasker.target);
     }
   });
-  this.testcase('#get', {
-    run:function() {
-      var tasker = new Tasker();
-      this.isNull(tasker.get('task0'));
-      this.isNull(tasker.get('task1'));
-      this.isNull(tasker.get('task2'));
-      this.isNull(tasker.get('task3'));
-      this.isNull(tasker.get('task4'));
-      this.isNull(tasker.get('task5'));
-
-      var task0 = new Task('task0', []);
-      var task1 = new Task('task1', []);
-      var task2 = new Task('task2', []);
-      var task3 = new Task('task3', []);
-      var task4 = new Task('task4', []);
-      var task5 = new Task('task5', []);
-      tasker._tasks[task0.name] = task0;
-      tasker._tasks[task1.name] = task1;
-      tasker.toplevels[task2.name] = task2;
-      tasker.toplevels[task3.name] = task3;
-      tasker._needed[task4.name] = task4;
-      tasker._needed[task5.name] = task5;
-
-      this.isNull(tasker.get('task0'));
-      this.isNull(tasker.get('task1'));
-      this.equal(tasker.get('task2'), task2);
-      this.equal(tasker.get('task3'), task3);
-      this.isNull(tasker.get('task4'));
-      this.isNull(tasker.get('task5'));
-    }
+  this.testcase('#get', function() {
+    this.scene('no namespace', {
+      run:function() {
+        var tasker = new Tasker();
+        this.isNull(tasker.get('task-0'));
+        this.isNull(tasker.get('task-1'));
+        this.isNull(tasker.get('task-2'));
+        this.isNull(tasker.get('task-3'));
+  
+        var task0 = new Task('task-0', []);
+        var task1 = new Task('task-1', []);
+        var task2 = new Task('task-2', []);
+        var task3 = new Task('task-3', []);
+        tasker._tasks['task-0'] = task0;
+        tasker._tasks['task-1'] = task1;
+        tasker.toplevels['task-2'] = task2;
+        tasker.toplevels['task-3'] = task3;
+  
+        this.isNull(tasker.get('task-0'));
+        this.isNull(tasker.get('task-1'));
+        this.equal(tasker.get('task-2'), task2);
+        this.equal(tasker.get('task-3'), task3);
+      }
+    });
+    this.scene('with namespace', {
+      run:function() {
+        var tasker = new Tasker();
+        tasker._namespace = 'NN';
+        this.isNull(tasker.get('task-0'));
+        this.isNull(tasker.get('task-1'));
+        this.isNull(tasker.get('task-2'));
+        this.isNull(tasker.get('task-3'));
+        this.isNull(tasker.get('task-0@NN'));
+        this.isNull(tasker.get('task-1@NN'));
+        this.isNull(tasker.get('task-2@NN'));
+        this.isNull(tasker.get('task-3@NN'));
+  
+        var task0 = new Task('task-0', []);
+        var task1 = new Task('task-1', []);
+        var task2 = new Task('task-2', []);
+        var task3 = new Task('task-3', []);
+        var task0nn = new Task('task-0', []);
+        var task1nn = new Task('task-1', []);
+        var task2nn = new Task('task-2', []);
+        var task3nn = new Task('task-3', []);
+        tasker._tasks['task-0'] = task0;
+        tasker._tasks['task-1'] = task1;
+        tasker.toplevels['task-2'] = task2;
+        tasker.toplevels['task-3'] = task3;
+        tasker._tasks['task-0@NN'] = task0nn;
+        tasker._tasks['task-1@NN'] = task1nn;
+        tasker.toplevels['task-2@NN'] = task2nn;
+        tasker.toplevels['task-3@NN'] = task3nn;
+  
+        this.isNull(tasker.get('task-0'));
+        this.isNull(tasker.get('task-1'));
+        this.equal(tasker.get('task-2'), task2nn);
+        this.equal(tasker.get('task-3'), task3nn);
+        this.isNull(tasker.get('task-0@NN'));
+        this.isNull(tasker.get('task-1@NN'));
+        this.isNull(tasker.get('task-2@NN'));
+        this.isNull(tasker.get('task-3@NN'));
+      }
+    });
+  });
+  this.testcase('#getByQName', function() {
+    this.scene('no namespace', {
+      run:function() {
+        var tasker = new Tasker();
+        this.isNull(tasker.getByQName('task-0'));
+        this.isNull(tasker.getByQName('task-1'));
+        this.isNull(tasker.getByQName('task-2'));
+        this.isNull(tasker.getByQName('task-3'));
+  
+        var task0 = new Task('task-0', []);
+        var task1 = new Task('task-1', []);
+        var task2 = new Task('task-2', []);
+        var task3 = new Task('task-3', []);
+        tasker._tasks['task-0'] = task0;
+        tasker._tasks['task-1'] = task1;
+        tasker.toplevels['task-2'] = task2;
+        tasker.toplevels['task-3'] = task3;
+  
+        this.isNull(tasker.getByQName('task-0'));
+        this.isNull(tasker.getByQName('task-1'));
+        this.equal(tasker.getByQName('task-2'), task2);
+        this.equal(tasker.getByQName('task-3'), task3);
+      }
+    });
+    this.scene('with namespace', {
+      run:function() {
+        var tasker = new Tasker();
+        tasker._namespace = 'NN';
+        this.isNull(tasker.getByQName('task-0'));
+        this.isNull(tasker.getByQName('task-1'));
+        this.isNull(tasker.getByQName('task-2'));
+        this.isNull(tasker.getByQName('task-3'));
+        this.isNull(tasker.getByQName('task-0@NN'));
+        this.isNull(tasker.getByQName('task-1@NN'));
+        this.isNull(tasker.getByQName('task-2@NN'));
+        this.isNull(tasker.getByQName('task-3@NN'));
+  
+        var task0 = new Task('task-0', []);
+        var task1 = new Task('task-1', []);
+        var task2 = new Task('task-2', []);
+        var task3 = new Task('task-3', []);
+        var task0nn = new Task('task-0', []);
+        var task1nn = new Task('task-1', []);
+        var task2nn = new Task('task-2', []);
+        var task3nn = new Task('task-3', []);
+        tasker._tasks['task-0'] = task0;
+        tasker._tasks['task-1'] = task1;
+        tasker.toplevels['task-2'] = task2;
+        tasker.toplevels['task-3'] = task3;
+        tasker._tasks['task-0@NN'] = task0nn;
+        tasker._tasks['task-1@NN'] = task1nn;
+        tasker.toplevels['task-2@NN'] = task2nn;
+        tasker.toplevels['task-3@NN'] = task3nn;
+  
+        this.isNull(tasker.getByQName('task-0'));
+        this.isNull(tasker.getByQName('task-1'));
+        this.equal(tasker.getByQName('task-2'), task2);
+        this.equal(tasker.getByQName('task-3'), task3);
+        this.isNull(tasker.getByQName('task-0@NN'));
+        this.isNull(tasker.getByQName('task-1@NN'));
+        this.equal(tasker.getByQName('task-2@NN'), task2nn);
+        this.equal(tasker.getByQName('task-3@NN'), task3nn);
+      }
+    });
   });
   this.testcase('#entry', function() {
     this.scene('entry a task having no child', {
@@ -108,7 +207,7 @@ testsuite('Test of Tasker', function() {
         this.equal(task0.name, 'task0');
         this.equal(task0._childs.length, 0);
         this.equal(task0.filename, filename);
-        this.equal(task0.lineno, 97);
+        this.equal(task0.lineno, 196);
         this.equal(task0._defined[0], 1);
       }
     });
@@ -133,13 +232,13 @@ testsuite('Test of Tasker', function() {
         this.equal(task0.name, 'task0');
         this.equal(task0._childs.length, 0);
         this.equal(task0.filename, filename);
-        this.equal(task0.lineno, 119);
+        this.equal(task0.lineno, 218);
         this.equal(task0._defined[0], 1);
         this.equal(task1.name, 'task1');
         this.equal(task1._childs.length, 1);
         this.equal(task1._childs[0], task0);
         this.equal(task1.filename, filename);
-        this.equal(task1.lineno, 120);
+        this.equal(task1.lineno, 219);
         this.equal(task1._defined[0], 1);
       }
     });
@@ -166,7 +265,7 @@ testsuite('Test of Tasker', function() {
         this.equal(task0._childs.length, 1);
         this.equal(task0._childs[0], task1);
         this.equal(task0.filename, filename);
-        this.equal(task0.lineno, 151);
+        this.equal(task0.lineno, 250);
         this.equal(task0._defined[0], 1);
         this.equal(task1.name, 'task1');
         this.equal(task1._childs.length, 0);
@@ -192,12 +291,12 @@ testsuite('Test of Tasker', function() {
         this.equal(task0._childs.length, 1);
         this.equal(task0._childs[0], task1);
         this.equal(task0.filename, filename);
-        this.equal(task0.lineno, 151);
+        this.equal(task0.lineno, 250);
         this.equal(task0._defined[0], 1);
         this.equal(task1.name, 'task1');
         this.equal(task1._childs.length, 0);
         this.equal(task1.filename, filename);
-        this.equal(task1.lineno, 177);
+        this.equal(task1.lineno, 276);
         this.equal(task1._defined[0], 1);
       }
     });
@@ -223,13 +322,13 @@ testsuite('Test of Tasker', function() {
         this.equal(task0.name, 'task0');
         this.equal(task0._childs.length, 0);
         this.equal(task0.filename, filename);
-        this.equal(task0.lineno, 209);
+        this.equal(task0.lineno, 308);
         this.equal(task0._defined[0], 1);
         this.equal(task1.name, 'task1');
         this.equal(task1._childs.length, 1);
         this.equal(task1._childs[0], task0);
         this.equal(task1.filename, filename);
-        this.equal(task1.lineno, 210);
+        this.equal(task1.lineno, 309);
         this.equal(task1._defined[0], 1);
 
         var task00 = tasker.entry('task0', []);
@@ -248,18 +347,18 @@ testsuite('Test of Tasker', function() {
         this.equal(task0.name, 'task0');
         this.equal(task0._childs.length, 0);
         this.equal(task0.filename, filename);
-        this.equal(task0.lineno, 209);
+        this.equal(task0.lineno, 308);
         this.equal(task0._defined[0], 2);
         this.equal(task1.name, 'task1');
         this.equal(task1._childs.length, 1);
         this.equal(task1._childs[0], task0);
         this.equal(task1.filename, filename);
-        this.equal(task1.lineno, 210);
+        this.equal(task1.lineno, 309);
         this.equal(task1._defined[0], 1);
         this.equal(task00.name, 'task0');
         this.equal(task00._childs.length, 0);
         this.equal(task00.filename, filename);
-        this.equal(task00.lineno, 235);
+        this.equal(task00.lineno, 334);
         this.equal(task00._defined[0], 2);
       }
     });
@@ -402,8 +501,7 @@ testsuite('Test of Tasker', function() {
         this.equal(tasker._namespace, 'XXX');
         this.isNull(tasker.target);
         this.equal(task0.name, 'task0@XXX');
-        this.isNull(tasker.get('task0'));
-        this.equal(tasker.get('task0@XXX'), task0);
+        this.equal(tasker.get('task0'), task0);
 
         var task1 = tasker.entry('task1', []);
         this.equal(Object.keys(tasker._tasks).length, 2);
@@ -420,10 +518,8 @@ testsuite('Test of Tasker', function() {
         this.isNull(tasker.target);
         this.equal(task0.name, 'task0@XXX');
         this.equal(task1.name, 'task1@XXX');
-        this.isNull(tasker.get('task0'));
-        this.isNull(tasker.get('task1'));
-        this.equal(tasker.get('task0@XXX'), task0);
-        this.equal(tasker.get('task1@XXX'), task1);
+        this.equal(tasker.get('task0'), task0);
+        this.equal(tasker.get('task1'), task1);
 
         var task00 = tasker.entry('task0', []);
         this.equal(Object.keys(tasker._tasks).length, 2);
@@ -440,10 +536,8 @@ testsuite('Test of Tasker', function() {
         this.isNull(tasker.target);
         this.equal(task0.name, 'task0@XXX');
         this.equal(task1.name, 'task1@XXX');
-        this.isNull(tasker.get('task0'));
-        this.isNull(tasker.get('task1'));
-        this.equal(tasker.get('task0@XXX'), task0);
-        this.equal(tasker.get('task1@XXX'), task1);
+        this.equal(tasker.get('task0'), task0);
+        this.equal(tasker.get('task1'), task1);
       }
     });
     this.scene('entry tasks with a namespace using a target', {
@@ -467,7 +561,7 @@ testsuite('Test of Tasker', function() {
         this.equal(tasker._lineno.filename, filename);
         this.equal(tasker._namespace, 'AAA');
         this.equal(tasker.target, 'task0@AAA');
-        this.equal(tasker.get('task0@AAA'), task0);
+        this.equal(tasker.get('task0'), task0);
 
         var task1 = tasker.entry('task1', ['task2','task4']);
         this.equal(Object.keys(tasker._tasks).length, 4);
@@ -486,8 +580,8 @@ testsuite('Test of Tasker', function() {
         this.equal(tasker._lineno.filename, filename);
         this.equal(tasker._namespace, 'AAA');
         this.equal(tasker.target, 'task0@AAA');
-        this.equal(tasker.get('task0@AAA'), task0);
-        this.equal(tasker.get('task1@AAA'), task1);
+        this.equal(tasker.get('task0'), task0);
+        this.equal(tasker.get('task1'), task1);
 
         var task2 = tasker.entry('task2', []);
         this.equal(Object.keys(tasker._tasks).length, 4);
@@ -506,9 +600,9 @@ testsuite('Test of Tasker', function() {
         this.equal(tasker._lineno.filename, filename);
         this.equal(tasker._namespace, 'AAA');
         this.equal(tasker.target, 'task0@AAA');
-        this.equal(tasker.get('task0@AAA'), task0);
-        this.equal(tasker.get('task1@AAA'), task1);
-        this.equal(tasker.get('task2@AAA'), task2);
+        this.equal(tasker.get('task0'), task0);
+        this.equal(tasker.get('task1'), task1);
+        this.equal(tasker.get('task2'), task2);
 
         var task3 = tasker.entry('task3', []);
         this.equal(Object.keys(tasker._tasks).length, 5);
@@ -529,10 +623,10 @@ testsuite('Test of Tasker', function() {
         this.equal(tasker._lineno.filename, filename);
         this.equal(tasker._namespace, 'AAA');
         this.equal(tasker.target, 'task0@AAA');
-        this.equal(tasker.get('task0@AAA'), task0);
-        this.equal(tasker.get('task1@AAA'), task1);
-        this.equal(tasker.get('task2@AAA'), task2);
-        this.equal(tasker.get('task3@AAA'), task3);
+        this.equal(tasker.get('task0'), task0);
+        this.equal(tasker.get('task1'), task1);
+        this.equal(tasker.get('task2'), task2);
+        this.equal(tasker.get('task3'), task3);
 
         var task4 = tasker.entry('task4', []);
         this.equal(Object.keys(tasker._tasks).length, 5);
@@ -553,11 +647,11 @@ testsuite('Test of Tasker', function() {
         this.equal(tasker._lineno.filename, filename);
         this.equal(tasker._namespace, 'AAA');
         this.equal(tasker.target, 'task0@AAA');
-        this.equal(tasker.get('task0@AAA'), task0);
-        this.equal(tasker.get('task1@AAA'), task1);
-        this.equal(tasker.get('task2@AAA'), task2);
-        this.equal(tasker.get('task3@AAA'), task3);
-        this.equal(tasker.get('task4@AAA'), task4);
+        this.equal(tasker.get('task0'), task0);
+        this.equal(tasker.get('task1'), task1);
+        this.equal(tasker.get('task2'), task2);
+        this.equal(tasker.get('task3'), task3);
+        this.equal(tasker.get('task4'), task4);
 
         var task5 = tasker.entry('task5', []);
         this.equal(task5.name, '');
@@ -579,11 +673,11 @@ testsuite('Test of Tasker', function() {
         this.equal(tasker._lineno.filename, filename);
         this.equal(tasker._namespace, 'AAA');
         this.equal(tasker.target, 'task0@AAA');
-        this.equal(tasker.get('task0@AAA'), task0);
-        this.equal(tasker.get('task1@AAA'), task1);
-        this.equal(tasker.get('task2@AAA'), task2);
-        this.equal(tasker.get('task3@AAA'), task3);
-        this.equal(tasker.get('task4@AAA'), task4);
+        this.equal(tasker.get('task0'), task0);
+        this.equal(tasker.get('task1'), task1);
+        this.equal(tasker.get('task2'), task2);
+        this.equal(tasker.get('task3'), task3);
+        this.equal(tasker.get('task4'), task4);
       }
     });
   });

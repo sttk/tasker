@@ -34,7 +34,11 @@ Tasker.prototype = new function() {
   };
 
   this.get = function(name) {
-    return this.toplevels[name];
+    return this.toplevels[this.generateQName(name, this._namespace)];
+  };
+
+  this.getByQName = function(qname) {
+    return this.toplevels[qname];
   };
 
   this.entry = function(name, childNames) {
