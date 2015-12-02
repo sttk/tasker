@@ -5,4 +5,8 @@ node_js:
   - "0.12"
   - "stable"
 script:
-  - gulp test
+  - tests/g4/g4.sh --file tests/g4/test2.js task-0
+  - tests/g4/g4.sh --file tests/g4/test2.js task-3
+  - tests/g4/g4.sh --file tests/g4/test2.js --tasks-simple
+  - tests/g4/g4.sh --file tests/g4/test2.js --tasks
+  - tests/g4/g4.sh --file tests/g4/test2.js --tasks-undefined
