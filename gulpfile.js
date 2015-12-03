@@ -15,6 +15,17 @@ gulp.task('help', function() {
   ghelp.show();
 }).help = 'shows a help message.';
 
+gulp.task('slink', function(cb) {
+  var slink = './node_modules/tasker';
+  if (! fs.existsSync(slink)) {
+    fs.symlink('..', './node_modules/tasker', function(e) {
+      if (e != null) { console.log("!ERROR: " + e); }
+      return;
+    });
+  }
+  cb();
+});
+
 gulp.task('lint', function() {
   function jshintMapper(data, cb) {
     cb(data.jshint.success ? null : new Error(), data);
@@ -37,14 +48,7 @@ gulp.task('lint-for-test', function() {
     .on('error', function() { this.emit('end'); });
 });
 
-gulp.task('test', ['lint', 'lint-for-test'], function() {
-  var slink = './node_modules/tasker';
-  if (! fs.existsSync(slink)) {
-    fs.symlink('..', './node_modules/tasker', function(e) {
-      if (e != null) { console.log("!ERROR: " + e); }
-      return;
-    });
-  }
+gulp.task('test', ['slink', 'lint', 'lint-for-test'], function() {
   gulp.src('tests/*.mocha', {read:false})
     .pipe(mocha())
     .on('error', function() { this.emit('end'); });
