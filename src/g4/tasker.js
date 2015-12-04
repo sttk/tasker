@@ -1,6 +1,7 @@
 'use strict';
 
 var Tasker = require('../tasker.js');
+var Task = require('./task.js');
 
 var tasker = new Tasker();
 

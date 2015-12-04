@@ -176,7 +176,7 @@ function spaces(n) {
 }
 
 function getTaskName(task) {
-  var name = task.displayName ? task.displayName : task.key;
+  var name = task.getDisplayName();
   var loc = '';
   if (task._defined[0] > 1) {
     if (task.filename !== g4file) {

@@ -97,6 +97,17 @@ Tasker.prototype = new function() {
     return name + '@' + namespace;
   };
 
+  this.generateTemporaryTask = function(key) {
+    var qkey = generateQKey(this, key);
+    var task = this._tasks.get(qkey);
+    if (!task) {
+      task = new Task(qkey, [], this._lineno.filename, 0);
+      this._tasks.set(qkey, task);
+      if (this.target == null) { this._needed.set(qkey, task); }
+    }
+    return task;
+  };
+
   function generateNamespace(tasker, namespace) {
     if (namespace) {
       if (tasker._namespace) {
@@ -136,13 +147,7 @@ Tasker.prototype = new function() {
   function createChilds(tasker, keys) {
     var childs = [];
     for (var i=0, n=keys.length; i<n; i++) {
-      var qkey = generateQKey(tasker, keys[i]);
-      var task = tasker._tasks.get(qkey);
-      if (!task) {
-        task = new Task(qkey, [], tasker._lineno.filename, 0);
-        tasker._tasks.set(qkey, task);
-        if (tasker.target == null) { tasker._needed.set(qkey, task); }
-      }
+      var task = tasker.generateTemporaryTask(keys[i]);
       childs.push(task);
     }
     return childs;

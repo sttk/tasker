@@ -1,6 +1,7 @@
 'use strict';
 
 var tasker = require('./tasker.js');
+var Task = require('./task.js');
 var bach = require('bach');
 
 var g4 = new function() {
@@ -8,43 +9,51 @@ var g4 = new function() {
   this.task = function(name, fn) {
     switch (typeof(name)) {
     case 'function' :
-      var key = getFuncName(name);
+      var key = getFuncKey(name);
       if (key == null) { throw Error('No function name.'); }
       return tasker.put(key, [], name, key);
     case 'string' :
-      if (typeof(fn) === 'function') {
-        var child = tasker._tasks.get(fn);
-        var childs = (child == null) ? [] : [fn];
-        return tasker.put(name, childs, fn, name);
-      } else {
-        throw new TypeError('arguments[2]');
+      switch (typeof(fn)) {
+      case 'function' :
+        var task = tasker._tasks.get(fn);
+        if (task == null) {
+          return tasker.put(name, [], fn, name);
+        } else if (task._bach) {
+          return tasker.put(name, [fn], fn, name);
+        } else if (getFuncKey(fn) != null) {
+          return tasker.put(name, [fn], genTaskFuncRunner(task), name);
+        } else {
+          return tasker.put(name, [], fn, name);
+        }
+      case 'string' :
+        var task = tasker._tasks.get(fn);
+        if (task == null) {
+          task = tasker.generateTemporaryTask(fn);
+        }
+        return tasker.put(name, [fn], genTaskFuncRunner(task), name);
+      default :
+        throw new TypeError('fn');
       }
     default :
-      throw new TypeError('arguments[1]');
+      throw new TypeError('name');
     }
   };
 
   this.series = function() {
     var args = [].slice.call(arguments);
-    var proxy = {func:noop};
-    var fn = function(proxy) {
-      return function() { proxy.func.apply(g4, arguments); };
-    }(proxy);
-    tasker.put(fn, args, fn, '<series>');
     var bachArgs = genBachArgs(args);
-    proxy.func = bach.series.apply(bach, bachArgs);
+    var fn = bach.series.apply(bach, bachArgs);
+    var task = tasker.put(fn, args, fn, '<series>');
+    task._bach = true;
     return fn;
   };
 
   this.parallel = function() {
     var args = [].slice.call(arguments);
-    var proxy = {func:noop};
-    var fn = function(proxy) {
-      return function() { proxy.func.apply(g4, arguments); };
-    }(proxy);
-    tasker.put(fn, args, fn, '<series>');
     var bachArgs = genBachArgs(args);
-    proxy.func = bach.parallel.apply(bach, bachArgs);
+    var fn = bach.parallel.apply(bach, bachArgs);
+    var task = tasker.put(fn, args, fn, '<parallel>');
+    task._bach = true;
     return fn;
   };
 
@@ -54,38 +63,32 @@ var g4 = new function() {
 
 };
 
-var noop = function() {};
-
 function genBachArgs(args) {
-  var bachArgs = [], fn, name, task;
+  var bachArgs = [];
   for (var i=0, n=args.length; i<n; i++) {
     switch (typeof(args[i])) {
     case 'function':
-      fn = args[i];
-      if (!tasker._tasks.has(fn)) {
-        tasker.put(fn, [], fn, getFuncName(fn, '<f>'));
+      var fn = args[i];
+      var task = tasker._tasks.get(fn);
+      if (task == null) {
+        task = tasker.put(fn, [], fn);
       }
-      bachArgs.push(fn);
-      break;
-    case 'string':
-      name = args[i];
-      task = tasker._tasks.get(name);
-      if (task == null) { // out of target.
-        fn = noop;
-      } else if (typeof(task.func) === 'function') {
-        fn = task.func;
+      if (getFuncKey(fn) == null) {
+        bachArgs.push(fn);
       } else {
-        fn = function(task) {
-          return function() {
-            if (typeof(task.func) !== 'function') {
-              throw new Error('No such task.: ' + task.key);
-            }
-            task.func.apply(g4, arguments);
-          };
-        }(task);
+        bachArgs.push(genTaskFuncRunner(task));
       }
-      bachArgs.push(fn);
       break;
+
+    case 'string':
+      var name = args[i];
+      var task = tasker._tasks.get(name);
+      if (task == null) {
+        task = tasker.generateTemporaryTask(name);
+      }
+      bachArgs.push(genTaskFuncRunner(task));
+      break;
+
     default:
       throw new Error('arguments[' + i + ']');
     }
@@ -93,16 +96,38 @@ function genBachArgs(args) {
   return bachArgs;
 }
 
-function getFuncName(fn, defName) {
+function getFuncKey(fn) {
   if (fn.displayName) {
     return fn.displayName;
-  }
-  else if (fn.name.length > 0) {
+  } else if (fn.name.length > 0) {
     return fn.name;
+  } else {
+    return null;
   }
-  else {
-    return defName;
-  }
+}
+
+function genTaskFuncRunner(task) {
+  return function(task) {
+    return function(cb) {
+      var ret;
+      var name = task.getDisplayName();
+      if (typeof(task.func) !== 'function') {
+        throw new Error('No such task.: ' + name);
+      }
+      console.log("Starting '" + name + "'...");
+      if (task.func.length === 0) {
+        ret = task.func.call(g4);
+        console.log("Finished '" + name + "'");
+        cb();
+      } else {
+        ret = task.func.call(g4, function() {
+          console.log("Finished '" + name + "'");
+          cb();
+        });
+      }
+      return ret;
+    }
+  }(task);
 }
 
 module.exports = g4;
