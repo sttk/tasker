@@ -65,10 +65,11 @@ function printTasksSimple(target) {
     lines.push(line);
     line.name = getTaskName(task);
     align = Math.max(align, line.name.length + 2);
-    if (task.description == null || typeof(task.description) !== 'object') {
-      line.desc = task.description ? task.description : '';
+    if (task.ret.description == null ||
+        typeof(task.ret.description) !== 'object') {
+      line.desc = task.ret.description ? task.ret.description : '';
     } else {
-      line.desc = task.description._ ? task.description._ : '';
+      line.desc = task.ret.description._ ? task.ret.description._ : '';
     }
   });
 
@@ -102,16 +103,17 @@ function printTasks(target, depth) {
     line.name = branch + name;
     align = Math.max(align, line.name.length + 2);
 
-    if (task.description == null || typeof(task.description) !== 'object') {
-      line.desc = task.description ? task.description : '';
+    if (task.ret.description == null ||
+        typeof(task.ret.description) !== 'object') {
+      line.desc = task.ret.description ? task.ret.description : '';
     } else {
-      Object.keys(task.description).forEach(function(key) {
+      Object.keys(task.ret.description).forEach(function(key) {
         if (key === '_') {
-          line.desc = task.description._ ? task.description._ : '';
+          line.desc = task.ret.description._ ? task.ret.description._ : '';
         } else {
           var optLine = {
             name: indent + ((task._childs.length > 0) ? '│ ' : '  ') + key,
-            desc: '…' + task.description[key]
+            desc: '…' + task.ret.description[key]
           };
           align = Math.max(align, optLine.name.length + 2);
           lines.push(optLine);

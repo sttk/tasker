@@ -11,6 +11,13 @@ tasker.toplevels.set = function(key, value) {
   return origToplevelsSet.apply(this, arguments);
 };
 
+var originalPut = tasker.put;
+tasker.put = function(key, childNames) {
+  var task = originalPut.apply(this, arguments);
+  task.ret = {};
+  return task;
+};
+
 tasker.onPut = function(task, fn, disp) {
   task.func = fn;
   task.displayName = disp;

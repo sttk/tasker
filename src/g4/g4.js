@@ -11,26 +11,26 @@ var g4 = new function() {
     case 'function' :
       var key = getFuncKey(name);
       if (key == null) { throw Error('No function name.'); }
-      return tasker.put(key, [], name, key);
+      return tasker.put(key, [], name, key).ret;
     case 'string' :
       switch (typeof(fn)) {
       case 'function' :
         var task = tasker._tasks.get(fn);
         if (task == null) {
-          return tasker.put(name, [], fn, name);
+          return tasker.put(name, [], fn, name).ret;
         } else if (task._bach) {
-          return tasker.put(name, [fn], fn, name);
+          return tasker.put(name, [fn], fn, name).ret;
         } else if (getFuncKey(fn) != null) {
-          return tasker.put(name, [fn], genTaskFuncRunner(task), name);
+          return tasker.put(name, [fn], genTaskFuncRunner(task), name).ret;
         } else {
-          return tasker.put(name, [], fn, name);
+          return tasker.put(name, [], fn, name).ret;
         }
       case 'string' :
         var task = tasker._tasks.get(fn);
         if (task == null) {
           task = tasker.generateTemporaryTask(fn);
         }
-        return tasker.put(name, [fn], genTaskFuncRunner(task), name);
+        return tasker.put(name, [fn], genTaskFuncRunner(task), name).ret;
       default :
         throw new TypeError('fn');
       }
