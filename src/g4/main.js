@@ -38,6 +38,7 @@ var target = argv._[0];
     tasker.target = target;
     g4.load(g4file);
     tasker.lateLoad();
+    process.chdir(path.dirname(g4file));
     runTask(target);
   }
 

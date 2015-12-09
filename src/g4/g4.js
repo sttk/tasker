@@ -3,6 +3,7 @@
 var tasker = require('./tasker.js');
 var Task = require('./task.js');
 var bach = require('bach');
+var path = require('path');
 
 var g4 = new function() {
 
@@ -120,6 +121,8 @@ function genTaskFuncRunner(task) {
         throw new Error('No such task.: ' + name);
       }
       console.log("Starting '" + name + "'...");
+      var prevDir = path.resolve('.');
+      process.chdir(path.dirname(task.filename));
       if (task.func.length === 0) {
         ret = task.func.call(g4);
         console.log("Finished '" + name + "'");
@@ -130,6 +133,7 @@ function genTaskFuncRunner(task) {
           cb();
         });
       }
+      process.chdir(prevDir);
       return ret;
     }
   }(task);
