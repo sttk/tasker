@@ -11,3 +11,6 @@ script:
   - tests/g4/g4.sh --file tests/g4/test2.js --tasks-simple
   - tests/g4/g4.sh --file tests/g4/test2.js --tasks
   - tests/g4/g4.sh --file tests/g4/test2.js --tasks-undefined
+  - tests/g4/g4.sh --file tests/g4/test5.js
+  - tests/g4/g4.sh --file tests/g4/test5.js --tasks
+  - tests/g4/g4.sh --file tests/g4/test5.js --tasks-simple
