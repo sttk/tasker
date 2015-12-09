@@ -18,22 +18,26 @@ var target = argv._[0];
   if (argv['tasks-simple']) {
     if (target != null) { tasker.target = target; }
     g4.load(g4file);
+    tasker.lateLoad();
     printTasksSimple(target);
   }
   else if (argv['tasks']) {
     if (target != null) { tasker.target = target; }
     g4.load(g4file);
+    tasker.lateLoad();
     printTasks(target, argv['depth']);
   }
   else if (argv['tasks-undefined']) {
     if (target != null) { tasker.target = target; }
     g4.load(g4file);
+    tasker.lateLoad();
     printTasksUndefined(target);
   }
   else {
     if (target == null) { target = 'default'; }
     tasker.target = target;
     g4.load(g4file);
+    tasker.lateLoad();
     runTask(target);
   }
 

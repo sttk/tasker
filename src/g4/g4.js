@@ -11,26 +11,26 @@ var g4 = new function() {
     case 'function' :
       var key = getFuncKey(name);
       if (key == null) { throw Error('No function name.'); }
-      return tasker.put(key, [], name, key).ret;
+      return tasker.put(key, [], name).ret;
     case 'string' :
       switch (typeof(fn)) {
       case 'function' :
         var task = tasker._tasks.get(fn);
         if (task == null) {
-          return tasker.put(name, [], fn, name).ret;
+          return tasker.put(name, [], fn).ret;
         } else if (task._bach) {
-          return tasker.put(name, [fn], fn, name).ret;
+          return tasker.put(name, [fn], fn).ret;
         } else if (getFuncKey(fn) != null) {
-          return tasker.put(name, [fn], genTaskFuncRunner(task), name).ret;
+          return tasker.put(name, [fn], genTaskFuncRunner(task)).ret;
         } else {
-          return tasker.put(name, [], fn, name).ret;
+          return tasker.put(name, [], fn).ret;
         }
       case 'string' :
         var task = tasker._tasks.get(fn);
         if (task == null) {
           task = tasker.generateTemporaryTask(fn);
         }
-        return tasker.put(name, [fn], genTaskFuncRunner(task), name).ret;
+        return tasker.put(name, [fn], genTaskFuncRunner(task)).ret;
       default :
         throw new TypeError('fn');
       }
@@ -58,8 +58,13 @@ var g4 = new function() {
   };
 
   this.load = function(filename, namespace) {
-    tasker.load(filename, namespace);
+    return tasker.load(filename, namespace);
   };
+
+  this.loadLater = function(filename, namespace) {
+    return tasker.loadLater(filename, namespace);
+  };
+
 
 };
 
