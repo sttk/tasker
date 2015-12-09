@@ -20,8 +20,7 @@ var Task = function(key, childs, filename, lineno) {
     this._defined[0] ++;
   }
 
-  if (typeof(key) === 'object' &&
-      key.forEachChild === Task.prototype.forEachChild) {
+  if (key instanceof Task) {
     CopyConstructor.prototype = Task.prototype;
     return new CopyConstructor(key, childs, filename, lineno);
   } else {
