@@ -6,6 +6,8 @@ var path = require('path');
 var load = require('load');
 var Map = (Map) ? Map : require('es6-map');
 
+require('./polyfill/object.js');
+
 var Tasker = function() {
   function Constructor() {
     this.toplevels = new Map();
