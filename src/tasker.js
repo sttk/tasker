@@ -6,6 +6,8 @@ var path = require('path');
 var load = require('load');
 var Map = (Map) ? Map : require('es6-map');
 
+require('./polyfill/object.js');
+
 var Tasker = function() {
   function Constructor() {
     this.toplevels = new Map();
@@ -59,14 +61,15 @@ Tasker.prototype = new function() {
   };
 
   this.load = function(filename, namespace) {
-    if (isFinished(this)) { return; }
+    if (isFinished(this)) { return {}; }
 
     filename = resolvePath(this, filename);
     var qpath = generateQPath(this, filename, namespace);
-    if (this._loaded.has(qpath)) { return; }
+    var info = this._loaded.get(qpath);
+    if (info != null) { return info.result; }
     this._willLoad.delete(qpath);
 
-    var info = {filename:filename, namespace:namespace, result:null};
+    info = {filename:filename, namespace:namespace, result:null};
     this._loaded.set(qpath, info);
 
     var prevLno = this._lineno;
@@ -81,13 +84,14 @@ Tasker.prototype = new function() {
   };
 
   this.loadLater = function(filename, namespace) {
-    if (isFinished(this)) { return; }
+    if (isFinished(this)) { return {}; }
 
     filename = resolvePath(this, filename);
     var qpath = generateQPath(this, filename, namespace);
-    if (this._willLoad.has(qpath)) { return; }
+    var info = this._willLoad.get(qpath);
+    if (info != null) { return info.result; }
 
-    var info = {filename:filename, namespace:namespace, result:{}};
+    info = {filename:filename, namespace:namespace, result:{}};
     this._willLoad.set(qpath, info);
 
     return info.result;
