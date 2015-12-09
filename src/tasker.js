@@ -59,36 +59,47 @@ Tasker.prototype = new function() {
   };
 
   this.load = function(filename, namespace) {
-    if (isFinished(this)) { return; }
+    if (isFinished(this)) { return {}; }
 
     filename = resolvePath(this, filename);
     var qpath = generateQPath(this, filename, namespace);
-    if (this._loaded.has(qpath)) { return; }
+    var info = this._loaded.get(qpath);
+    if (info != null) { return info.result; }
     this._willLoad.delete(qpath);
-    this._loaded.set(qpath, {filename:filename, namespace:namespace});
+
+    info = {filename:filename, namespace:namespace, result:null};
+    this._loaded.set(qpath, info);
 
     var prevLno = this._lineno;
     var prevNs = this._namespace;
     this._lineno = new Lineno(filename);
     this._namespace = generateNamespace(this, namespace);
-    requireWithoutCache(filename);
+    info.result = requireWithoutCache(filename);
     this._lineno = prevLno;
     this._namespace = prevNs;
+
+    return info.result;
   };
 
   this.loadLater = function(filename, namespace) {
-    if (isFinished(this)) { return; }
+    if (isFinished(this)) { return {}; }
 
     filename = resolvePath(this, filename);
     var qpath = generateQPath(this, filename, namespace);
-    if (this._willLoad.has(qpath)) { return; }
-    this._willLoad.set(qpath, {filename:filename, namespace:namespace});
+    var info = this._willLoad.get(qpath);
+    if (info != null) { return info.result; }
+
+    info = {filename:filename, namespace:namespace, result:{}};
+    this._willLoad.set(qpath, info);
+
+    return info.result;
   };
 
   this.lateLoad = function() {
     var self = this;
-    self._willLoad.forEach(function(value) {
-      self.load(value.filename, value.namespace);
+    self._willLoad.forEach(function(info) {
+      var ret = self.load(info.filename, info.namespace);
+      Object.assign(info.result, ret);
     });
     self._willLoad.clear();
   };
@@ -221,7 +232,7 @@ Tasker.prototype = new function() {
   function requireWithoutCache(filename) {
     var exports = {};
     var module = {exports:exports};
-    load(filename, {module:module, exports:exports});
+    return load(filename, {module:module, exports:exports});
   }
 };
 
