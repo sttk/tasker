@@ -1153,7 +1153,7 @@ describe('Test of Tasker', function() {
       assert.equal(tasker._loaded.get(file_d0 + ';D0').filename, file_d0);
       assert.equal(tasker._loaded.get(file_d0 + ';D0').namespace, 'D0');
 
-      var d1 = tasker.load('./d1.js', 'D1');
+      tasker.load('./d1.js', 'D1');
       var file_d1 = require.resolve('tasker/tests/tasker/d1.js');
       var task2d1 = tasker._tasks.get('task-2@D1');
       var task1d0d1 = tasker._tasks.get('task-1@D0@D1');
@@ -1185,10 +1185,8 @@ describe('Test of Tasker', function() {
       assert.equal(tasker._loaded.get(file_d1 + ';D1').namespace, 'D1');
       assert.equal(tasker._loaded.get(file_d0 + ';D0;D1').filename, file_d0);
       assert.equal(tasker._loaded.get(file_d0 + ';D0;D1').namespace, 'D0');
-      assert.equal(d1.aaa, 123);
-      assert.equal(d1.bbb, 'BBB');
 
-      var d11 = tasker.load('./d1.js', 'D1');
+      tasker.load('./d1.js', 'D1');
 
       assert.equal(tasker.toplevels.size, 4);
       assert.equal(tasker._tasks.size, 7);
@@ -1216,8 +1214,24 @@ describe('Test of Tasker', function() {
       assert.equal(tasker._loaded.get(file_d1 + ';D1').namespace, 'D1');
       assert.equal(tasker._loaded.get(file_d0 + ';D0;D1').filename, file_d0);
       assert.equal(tasker._loaded.get(file_d0 + ';D0;D1').namespace, 'D0');
-      assert.equal(d11.aaa, 123);
-      assert.equal(d11.bbb, 'BBB');
+    });
+
+    it('pass variables between loading and loaded files.', function() {
+      var tasker = require('tasker/tests/tasker/e.js');
+      var filename = require.resolve('tasker/tests/tasker/e.js');
+      tasker._lineno = new Lineno(filename);
+
+      var ret = tasker.load('./e0.js', {param1:123, param2:'ABC'});
+      assert.equal(ret.ret1, 987);
+      assert.equal(ret.ret2, 'XYZ');
+
+      var ret2 = tasker.load('./e0.js', {param1:123, param2:'ABC'});
+      assert.equal(ret2.ret1, 987);
+      assert.equal(ret2.ret2, 'XYZ');
+
+      var ret3 = tasker.load('./e0.js', 'D2', {param1:123, param2:'ABC'});
+      assert.equal(ret3.ret1, 987);
+      assert.equal(ret3.ret2, 'XYZ');
     });
 
   });
@@ -1536,7 +1550,7 @@ describe('Test of Tasker', function() {
       assert.equal(tasker._willLoad.get(file_dd0 + ';D0').filename, file_dd0);
       assert.equal(tasker._willLoad.get(file_dd0 + ';D0').namespace, 'D0');
 
-      var dd1 = tasker.loadLater('./dd1.js', 'D1');
+      tasker.loadLater('./dd1.js', 'D1');
       var file_dd1 = require.resolve('tasker/tests/tasker/dd1.js');
 
       assert.equal(tasker.toplevels.size, 1);
@@ -1555,10 +1569,8 @@ describe('Test of Tasker', function() {
       assert.equal(tasker._willLoad.get(file_dd0 + ';D0').namespace, 'D0');
       assert.equal(tasker._willLoad.get(file_dd1 + ';D1').filename, file_dd1);
       assert.equal(tasker._willLoad.get(file_dd1 + ';D1').namespace, 'D1');
-      assert.equal(dd1.aaa, null);
-      assert.equal(dd1.bbb, null);
 
-      var dd11 = tasker.loadLater('./dd1.js', 'D1');
+      tasker.loadLater('./dd1.js', 'D1');
 
       assert.equal(tasker.toplevels.size, 1);
       assert.equal(tasker._tasks.size, 2);
@@ -1576,8 +1588,6 @@ describe('Test of Tasker', function() {
       assert.equal(tasker._willLoad.get(file_dd0 + ';D0').namespace, 'D0');
       assert.equal(tasker._willLoad.get(file_dd1 + ';D1').filename, file_dd1);
       assert.equal(tasker._willLoad.get(file_dd1 + ';D1').namespace, 'D1');
-      assert.equal(dd1.aaa, null);
-      assert.equal(dd1.bbb, null);
 
       tasker.lateLoad();
 
@@ -1613,10 +1623,6 @@ describe('Test of Tasker', function() {
       assert.equal(tasker._loaded.get(file_dd1 + ';D1').namespace, 'D1');
       assert.equal(tasker._loaded.get(file_dd0 + ';D0;D1').filename, file_dd0);
       assert.equal(tasker._loaded.get(file_dd0 + ';D0;D1').namespace, 'D0');
-      assert.equal(dd1.aaa, 987);
-      assert.equal(dd1.bbb, 'XXX');
-      assert.equal(dd11.aaa, 987);
-      assert.equal(dd11.bbb, 'XXX');
     });
 
     it('loadLater but already finished', function() { 
@@ -1672,6 +1678,33 @@ describe('Test of Tasker', function() {
       assert.equal(tasker.target, 'task-0');
       assert.equal(tasker.toplevels.get('task-0'), task0);
       assert.equal(tasker._tasks.get('task-0'), task0);
+    });
+
+    it('pass variables between loading and loaded files.', function() {
+      var tasker = require('tasker/tests/tasker/ee.js');
+      var filename = require.resolve('tasker/tests/tasker/ee.js');
+      tasker._lineno = new Lineno(filename);
+
+      var ret = tasker.loadLater('./ee0.js', {param1:123, param2:'ABC'});
+      assert.equal(ret.ret1, null);
+      assert.equal(ret.ret2, null);
+
+      var ret2 = tasker.loadLater('./ee0.js', {param1:123, param2:'ABC'});
+      assert.equal(ret2.ret1, null);
+      assert.equal(ret2.ret2, null);
+
+      var ret3 = tasker.loadLater('./ee0.js', 'D2', {param1:123, param2:'ABC'});
+      assert.equal(ret3.ret1, null);
+      assert.equal(ret3.ret2, null);
+
+      tasker.lateLoad();
+
+      assert.equal(ret.ret1, 987);
+      assert.equal(ret.ret2, 'XYZ');
+      assert.equal(ret2.ret1, 987);
+      assert.equal(ret2.ret2, 'XYZ');
+      assert.equal(ret3.ret1, 987);
+      assert.equal(ret3.ret2, 'XYZ');
     });
   });
 
