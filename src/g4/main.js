@@ -98,10 +98,10 @@ function printTasks(target, depth) {
       branch = '├─';
       indent = '│ ';
     }
-    if (task._childs.length > 0) {
-      branch += '┬ ';
-    } else {
+    if (task._childs.length === 0 || depth === 0) {
       branch += '─ ';
+    } else {
+      branch += '┬ ';
     }
 
     line.name = branch + name;
