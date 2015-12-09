@@ -1216,6 +1216,24 @@ describe('Test of Tasker', function() {
       assert.equal(tasker._loaded.get(file_d0 + ';D0;D1').namespace, 'D0');
     });
 
+    it('pass variables between loading and loaded files.', function() {
+      var tasker = require('tasker/tests/tasker/e.js');
+      var filename = require.resolve('tasker/tests/tasker/e.js');
+      tasker._lineno = new Lineno(filename);
+
+      var ret = tasker.load('./e0.js', {param1:123, param2:'ABC'});
+      assert.equal(ret.ret1, 987);
+      assert.equal(ret.ret2, 'XYZ');
+
+      var ret2 = tasker.load('./e0.js', {param1:123, param2:'ABC'});
+      assert.equal(ret2.ret1, 987);
+      assert.equal(ret2.ret2, 'XYZ');
+
+      var ret3 = tasker.load('./e0.js', 'D2', {param1:123, param2:'ABC'});
+      assert.equal(ret3.ret1, 987);
+      assert.equal(ret3.ret2, 'XYZ');
+    });
+
   });
 
   describe('#loadLater', function() {
@@ -1660,6 +1678,33 @@ describe('Test of Tasker', function() {
       assert.equal(tasker.target, 'task-0');
       assert.equal(tasker.toplevels.get('task-0'), task0);
       assert.equal(tasker._tasks.get('task-0'), task0);
+    });
+
+    it('pass variables between loading and loaded files.', function() {
+      var tasker = require('tasker/tests/tasker/ee.js');
+      var filename = require.resolve('tasker/tests/tasker/ee.js');
+      tasker._lineno = new Lineno(filename);
+
+      var ret = tasker.loadLater('./ee0.js', {param1:123, param2:'ABC'});
+      assert.equal(ret.ret1, null);
+      assert.equal(ret.ret2, null);
+
+      var ret2 = tasker.loadLater('./ee0.js', {param1:123, param2:'ABC'});
+      assert.equal(ret2.ret1, null);
+      assert.equal(ret2.ret2, null);
+
+      var ret3 = tasker.loadLater('./ee0.js', 'D2', {param1:123, param2:'ABC'});
+      assert.equal(ret3.ret1, null);
+      assert.equal(ret3.ret2, null);
+
+      tasker.lateLoad();
+
+      assert.equal(ret.ret1, 987);
+      assert.equal(ret.ret2, 'XYZ');
+      assert.equal(ret2.ret1, 987);
+      assert.equal(ret2.ret2, 'XYZ');
+      assert.equal(ret3.ret1, 987);
+      assert.equal(ret3.ret2, 'XYZ');
     });
   });
 

@@ -60,8 +60,15 @@ Tasker.prototype = new function() {
     return task;
   };
 
-  this.load = function(filename, namespace) {
+  this.load = function(filename, namespace, params) {
     if (isFinished(this)) { return {}; }
+
+    if (namespace != null && typeof(namespace) !== 'string') {
+      params = namespace;
+      namespace = null;
+    } else if (params == null) {
+      params = {};
+    }
 
     filename = resolvePath(this, filename);
     var qpath = generateQPath(this, filename, namespace);
@@ -69,29 +76,46 @@ Tasker.prototype = new function() {
     if (info != null) { return info.result; }
     this._willLoad.delete(qpath);
 
-    info = {filename:filename, namespace:namespace, result:null};
+    info = {
+      filename: filename,
+      namespace: namespace,
+      parameters: params,
+      result: null
+    };
     this._loaded.set(qpath, info);
 
     var prevLno = this._lineno;
     var prevNs = this._namespace;
     this._lineno = new Lineno(filename);
     this._namespace = generateNamespace(this, namespace);
-    info.result = requireWithoutCache(filename);
+    info.result = requireWithoutCache(filename, info.parameters);
     this._lineno = prevLno;
     this._namespace = prevNs;
 
     return info.result;
   };
 
-  this.loadLater = function(filename, namespace) {
+  this.loadLater = function(filename, namespace, params) {
     if (isFinished(this)) { return {}; }
+
+    if (namespace != null && typeof(namespace) !== 'string') {
+      params = namespace;
+      namespace = null;
+    } else if (params == null) {
+      params = {};
+    }
 
     filename = resolvePath(this, filename);
     var qpath = generateQPath(this, filename, namespace);
     var info = this._willLoad.get(qpath);
     if (info != null) { return info.result; }
 
-    info = {filename:filename, namespace:namespace, result:{}};
+    info = {
+      filename: filename,
+      namespace: namespace,
+      parameters: params,
+      result: {}
+    };
     this._willLoad.set(qpath, info);
 
     return info.result;
@@ -100,7 +124,7 @@ Tasker.prototype = new function() {
   this.lateLoad = function() {
     var self = this;
     self._willLoad.forEach(function(info) {
-      var ret = self.load(info.filename, info.namespace);
+      var ret = self.load(info.filename, info.namespace, info.parameters);
       Object.assign(info.result, ret);
     });
     self._willLoad.clear();
@@ -231,10 +255,10 @@ Tasker.prototype = new function() {
     }
   }
 
-  function requireWithoutCache(filename) {
-    var exports = {};
-    var module = {exports:exports};
-    return load(filename, {module:module, exports:exports});
+  function requireWithoutCache(filename, params) {
+    params.exports = {};
+    params.module = {exports: params.exports};
+    return load(filename, params);
   }
 };
 
