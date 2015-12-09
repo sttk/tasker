@@ -1,7 +1,7 @@
 var tasker = require('tasker');
 
-var a0 = tasker.loadLater('./a/a0.js');
 var a1 = tasker.loadLater('./a/a1.js', 'a1');
+tasker.loadLater('./a/a0.js', a1);
 
 tasker.task('default',
   tasker.series('clean', 'build@a1', 'serve@a1', function(cb) {

@@ -2,6 +2,7 @@ var tasker = require('tasker');
 
 tasker.task('clean', function(cb) {
   console.log('** clean');
+  console.log('Delete ' + build);
   cb();
 }).description = 'Delete dist folder';
 
