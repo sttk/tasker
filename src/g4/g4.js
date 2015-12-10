@@ -112,6 +112,18 @@ function getFuncKey(fn) {
   }
 }
 
+function preRunningFunction(task) {
+  if (!task._bach) {
+    console.log("Starting '" + task.getDisplayName() + "'...");
+  }
+}
+
+function postRunningFunction(task) {
+  if (!task._bach) {
+    console.log("Finished '" + task.getDisplayName() + "'");
+  }
+}
+
 function genTaskFuncRunner(task) {
   return function(task) {
     return function(cb) {
@@ -120,13 +132,13 @@ function genTaskFuncRunner(task) {
       if (typeof(task.func) !== 'function') {
         throw new Error('No such task.: ' + name);
       }
-      console.log("Starting '" + name + "'...");
+      preRunningFunction(task);
       var prevDir = path.resolve('.');
       process.chdir(path.dirname(task.filename));
       if (task.func.length === 0) {
         try {
           ret = task.func.call(g4);
-          console.log("Finished '" + name + "'");
+          postRunningFunction(task);
           cb();
         } catch (e) {
           throw e;
@@ -137,7 +149,7 @@ function genTaskFuncRunner(task) {
             if (err) {
               cb(err);
             } else {
-              console.log("Finished '" + name + "'");
+              postRunningFunction(task);
               cb();
             }
           });
