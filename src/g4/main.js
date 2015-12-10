@@ -13,6 +13,11 @@ var argv = require('yargs')
 var g4file = path.resolve(argv['file']);
 var target = argv._[0];
 
+var isError = false;
+process.on('beforeExit', function(code) {
+  if (isError) { process.exit(1); }
+});
+
 (function() {
 
   if (argv['tasks-simple']) {
@@ -49,7 +54,8 @@ function runTask(target) {
     throw new Error('No such task.: ' + target);
   }
   g4.parallel(target)(function(err, res) {
-    if (err) { throw err; }
+    if (err) { isError = true; console.error(err.stack); }
+    //if (err) { throw err; }
   });
 }
 

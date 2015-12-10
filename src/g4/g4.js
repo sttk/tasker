@@ -124,14 +124,26 @@ function genTaskFuncRunner(task) {
       var prevDir = path.resolve('.');
       process.chdir(path.dirname(task.filename));
       if (task.func.length === 0) {
-        ret = task.func.call(g4);
-        console.log("Finished '" + name + "'");
-        cb();
-      } else {
-        ret = task.func.call(g4, function() {
+        try {
+          ret = task.func.call(g4);
           console.log("Finished '" + name + "'");
           cb();
-        });
+        } catch (e) {
+          throw e;
+        }
+      } else {
+        try {
+          ret = task.func.call(g4, function(err) {
+            if (err) {
+              cb(err);
+            } else {
+              console.log("Finished '" + name + "'");
+              cb();
+            }
+          });
+        } catch (e) {
+          throw e;
+        }
       }
       process.chdir(prevDir);
       return ret;
