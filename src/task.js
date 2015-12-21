@@ -68,12 +68,7 @@ Task.prototype = new function() {
   }
 
   function filterChildsToAvoidCyclic(task, map) {
-    var arr = [];
-    for (var i=0, n=task._childs.length; i<n; i++) {
-      if (map.has(task._childs[i])) { continue; }
-      arr.push(task._childs[i]);
-    }
-    return arr;
+    return task._childs.filter(function(child) { return !map.has(child); });
   }
 };
 
