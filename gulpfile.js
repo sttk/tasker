@@ -1,55 +1,48 @@
-'use strict';
+'use strict'
 
-var gulp = require('gulp');
-var ghelp = require('gulp-showhelp');
-var jshint = require('gulp-jshint');
-var stylish = require('jshint-stylish');
-var mapstream = require('map-stream');
-var mocha = require('gulp-mocha');
-var fs = require('fs');
+const gulp = require('gulp-run-seq')
+const ghelp = require('gulp-showhelp')
+const eslint = require('gulp-eslint')
+const mocha = require('gulp-mocha')
+const fs = require('fs')
 
 
-gulp.task('default', [ 'help' ]);
+gulp.task('default', [ 'help' ])
 
-gulp.task('help', function() {
-  ghelp.show();
-}).help = 'shows a help message.';
+gulp.task('help', () => {
+  ghelp.show()
+}).help = 'shows a help message.'
 
-gulp.task('lint', function() {
-  function jshintMapper(data, cb) {
-    cb(data.jshint.success ? null : new Error(), data);
-  }
+gulp.task('lint', (end) => {
   gulp.src('src/*.js')
-    .pipe(jshint())
-    .pipe(jshint.reporter(stylish))
-    .pipe(mapstream(jshintMapper))
-    .on('error', function() { this.emit('end'); });
-}).help = 'lints source files.';
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.results(function(results) { end() }))
+    .pipe(eslint.failAfterError())
+}).help = 'lints source files.'
 
-gulp.task('lint-for-test', function() {
-  function jshintMapper(data, cb) {
-    cb(data.jshint.success ? null : new Error(), data);
-  }
+gulp.task('lint-test', (end) => {
   gulp.src('tests/*.mocha')
-    .pipe(jshint())
-    .pipe(jshint.reporter(stylish))
-    .pipe(mapstream(jshintMapper))
-    .on('error', function() { this.emit('end'); });
-});
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.results(function(results) { end() }))
+    .pipe(eslint.failAfterError())
+}).help = 'lints test source files.'
 
-gulp.task('test', ['lint', 'lint-for-test'], function() {
+gulp.task('symlink', (end) => {
   var slink = './node_modules/tasker';
-  if (! fs.existsSync(slink)) {
-    fs.symlink('..', './node_modules/tasker', function(e) {
-      if (e != null) { console.log("!ERROR: " + e); }
-      return;
-    });
+  if (fs.existsSync(slink)) {
+    end()
+    return
   }
-  gulp.src('tests/*.mocha', {read:false})
-    .pipe(mocha())
-    .on('error', function() { this.emit('end'); });
-}).help = 'run mocha tests.'
+  fs.symlink('..', './node_modules/tasker', function(e) {
+    if (e != null) { console.log("!ERROR: " + e); }
+    end(e)
+  });
+}).help = 'make symbolic link of this project in node_modules.'
 
-gulp.task('watch-test', function() {
-  gulp.watch(['src/**', 'tests/**'], ['test']);
-});
+gulp.task('test', [[ ['lint', 'lint-test'], 'symlink' ]], (end) => {
+  gulp.src('tests/*.mocha', { read: false })
+    .pipe(mocha())
+    .on('end', end)
+}).help = 'run mocha tests.'

@@ -1,378 +1,368 @@
-'use strict';
-
-var Task = require('tasker/src/task.js');
-var assert = require('assert');
-
-describe('Test of Task', function() {
-
-  describe('Constructor', function() {
-    it('no arguments.', function() {
-      var task = new Task();
-      assert.equal(task.key, null);
-      assert.equal(task._childs, null);
-      assert.equal(task.filename, null);
-      assert.equal(task.lineno, null);
-      assert.equal(task._defined[0], 0);
-    });
-
-    it('no child, no filename, no lineno.', function() {
-      var task = new Task('task-0');
-      assert.equal(task.key, 'task-0');
-      assert.equal(task._childs, null);
-      assert.equal(task.filename, null);
-      assert.equal(task.lineno, null);
-      assert.equal(task._defined[0], 0);
-    });
-
-    it('full arguments, but childs is empty.', function() {
-      var task = new Task('task-0', [], 'aaa', 10);
-      assert.equal(task.key, 'task-0');
-      assert.equal(task._childs.length, 0);
-      assert.equal(task.filename, 'aaa');
-      assert.equal(task.lineno, 10);
-      assert.equal(task._defined[0], 0);
-    });
-
-    it('full arguments, and childs is not empty.', function() {
-      var obj1 = {}, obj2 = {};
-      var task = new Task('task-0', [obj1, obj2], 'aaa', 10);
-      assert.equal(task.key, 'task-0');
-      assert.equal(task._childs.length, 2);
-      assert.equal(task._childs[0], obj1);
-      assert.equal(task._childs[1], obj2);
-      assert.equal(task.filename, 'aaa');
-      assert.equal(task.lineno, 10);
-      assert.equal(task._defined[0], 0);
-    });
-
-    it('key is not a string', function() {
-      var fn = function() { return 'a function'; };
-      var task = new Task(fn, [], 'aaa', 10);
-      assert.equal(task.key, fn);
-      assert.equal(task._childs.length, 0);
-      assert.equal(task.filename, 'aaa');
-      assert.equal(task.lineno, 10);
-      assert.equal(task._defined[0], 0);
-
-      function fn2() { return 'function 2'; }
-      task = new Task(fn2, [], 'aaa', 10);
-      assert.equal(task.key, fn2);
-      assert.equal(task._childs.length, 0);
-      assert.equal(task.filename, 'aaa');
-      assert.equal(task.lineno, 10);
-      assert.equal(task._defined[0], 0);
-    });
-  });
-
-  describe('Copy constructor', function() {
-
-    it('no child, no filename, no lineno.', function() {
-      var task0 = new Task('task-0');
-
-      var task1 = new Task(task0);
-      assert.equal(task1.key, 'task-0');
-      assert.equal(task1._childs, null);
-      assert.equal(task1.filename, null);
-      assert.equal(task1.lineno, null);
-      assert.equal(task1._defined[0], 1);
-
-      assert.equal(task0._defined[0], 1);
-
-      var task2 = new Task(task0);
-      assert.equal(task2.key, 'task-0');
-      assert.equal(task2._childs, null);
-      assert.equal(task2.filename, null);
-      assert.equal(task2.lineno, null);
-      assert.equal(task2._defined[0], 2);
-
-      assert.equal(task1._defined[0], 2);
-      assert.equal(task0._defined[0], 2);
-    });
-
-    it('full arguments, but childs is empty.', function() {
-      var obj1 = {};
-      var task0 = new Task('task-0', [obj1], 'aaa', 10);
-
-      var task1 = new Task(task0, [], 'bbb', 20);
-      assert.equal(task1.key, 'task-0');
-      assert.equal(task1._childs.length, 0);
-      assert.equal(task1.filename, 'bbb');
-      assert.equal(task1.lineno, 20);
-      assert.equal(task1._defined[0], 1);
-
-      assert.equal(task0._defined[0], 1);
-
-      var task2 = new Task(task0, [], 'ccc', 30);
-      assert.equal(task2.key, 'task-0');
-      assert.equal(task2._childs.length, 0);
-      assert.equal(task2.filename, 'ccc');
-      assert.equal(task2.lineno, 30);
-      assert.equal(task2._defined[0], 2);
-
-      assert.equal(task1._defined[0], 2);
-      assert.equal(task0._defined[0], 2);
-    });
-
-    it('full arguments, but childs is empty.', function() {
-      var obj0 = {};
-      var task0 = new Task('task-0', [obj0], 'aaa', 10);
-
-      var obj1 = {}, obj11 = {};
-      var task1 = new Task(task0, [obj1, obj11], 'bbb', 20);
-      assert.equal(task1.key, 'task-0');
-      assert.equal(task1._childs.length, 2);
-      assert.equal(task1._childs[0], obj1);
-      assert.equal(task1._childs[1], obj11);
-      assert.equal(task1.filename, 'bbb');
-      assert.equal(task1.lineno, 20);
-      assert.equal(task1._defined[0], 1);
-
-      assert.equal(task0._defined[0], 1);
-
-      var obj2 = {};
-      var task2 = new Task(task0, [obj2], 'ccc', 30);
-      assert.equal(task2.key, 'task-0');
-      assert.equal(task2._childs.length, 1);
-      assert.equal(task2._childs[0], obj2);
-      assert.equal(task2.filename, 'ccc');
-      assert.equal(task2.lineno, 30);
-      assert.equal(task2._defined[0], 2);
-
-      assert.equal(task1._defined[0], 2);
-      assert.equal(task0._defined[0], 2);
-    });
-
-    it('key is not a string.', function() {
-      var fn0 = function() {};
-      var obj0 = {};
-      var task0 = new Task(fn0, [obj0], 'aaa', 10);
-
-      var obj1 = {}, obj11 = {};
-      var task1 = new Task(task0, [obj1, obj11], 'bbb', 20);
-      assert.equal(task1.key, fn0);
-      assert.equal(task1._childs.length, 2);
-      assert.equal(task1._childs[0], obj1);
-      assert.equal(task1._childs[1], obj11);
-      assert.equal(task1.filename, 'bbb');
-      assert.equal(task1.lineno, 20);
-      assert.equal(task1._defined[0], 1);
-
-      assert.equal(task0._defined[0], 1);
-
-      var obj2 = {};
-      var task2 = new Task(task0, [obj2], 'ccc', 30);
-      assert.equal(task2.key, fn0);
-      assert.equal(task2._childs.length, 1);
-      assert.equal(task2._childs[0], obj2);
-      assert.equal(task2.filename, 'ccc');
-      assert.equal(task2.lineno, 30);
-      assert.equal(task2._defined[0], 2);
-
-      assert.equal(task1._defined[0], 2);
-      assert.equal(task0._defined[0], 2);
-    });
-
-  });
-
-  describe('#forEachChild', function() {
-
-   it('no child.', function() {
-     var task = new Task('task-0', []);
-     task.forEachChild(function(each) {
-       assert.ok(false);
-     });
-     assert.ok(true);
-   });
-
-   it('has children.', function() {
-     var task0 = new Task('task-0', []);
-     var task1 = new Task('task-1', []);
-     var task2 = new Task('task-2', [task1, task0]);
-
-     var logs = [];
-     task2.forEachChild(function(each) {
-       var s = each.element.key + ':' + each.index + '/' + each.count;
-       logs.push(s);
-     });
-     assert.equal(logs.length, 2);
-     assert.equal(logs[0], 'task-1:0/2');
-     assert.equal(logs[1], 'task-0:1/2');
-   });
-
-   it('no grandchild is listed.', function() {
-     var task0 = new Task('task-0', []);
-     var task1 = new Task('task-1', [task0]);
-     var task2 = new Task('task-2', [task1]);
-
-     var logs = [];
-     task2.forEachChild(function(each) {
-       var s = each.element.key + ':' + each.index + '/' + each.count;
-       logs.push(s);
-     });
-     assert.equal(logs.length, 1);
-     assert.equal(logs[0], 'task-1:0/1');
-   });
-
-  });
-
-  describe('#forEachDescendant', function() {
-
-   it('no child.', function() {
-     var task = new Task('task-0', []);
-     task.forEachDescendant(function() {
-       assert.ok(false);
-     });
-     assert.ok(true);
-   });
-
-   it('has children.', function() {
-     var task0 = new Task('task-0', []);
-     var task1 = new Task('task-1', []);
-     var task2 = new Task('task-2', [task0, task1]);
-     var logs = [];
-     task2.forEachDescendant(function(each) {
-       var s = each.element.key+':'+each.index+'/'+each.count+':'+each.depth;
-       logs.push(s);
-     });
-     assert.equal(logs.length, 2);
-     assert.equal(logs[0], "task-0:0/2:1", logs[0]);
-     assert.equal(logs[1], "task-1:1/2:1", logs[1]);
-   });
-
-   it('has grandchildren.', function() {
-     var task0 = new Task('task-0', []);
-     var task1 = new Task('task-1', []);
-     var task2 = new Task('task-2', [task0, task1]);
-     var task3 = new Task('task-3', []);
-     var task4 = new Task('task-4', []);
-     var task5 = new Task('task-5', [task4, task3]);
-     var task6 = new Task('task-6', [task2, task5]);
-
-     var logs = [];
-     task6.forEachDescendant(function(each) {
-       var s = each.element.key+':'+each.index+'/'+each.count+':'+each.depth;
-       logs.push(s);
-     });
-
-     assert.equal(logs.length, 6);
-     assert.equal(logs[0], "task-2:0/2:1");
-     assert.equal(logs[1], "task-0:0/2:2");
-     assert.equal(logs[2], "task-1:1/2:2");
-     assert.equal(logs[3], "task-5:1/2:1");
-     assert.equal(logs[4], "task-4:0/2:2");
-     assert.equal(logs[5], "task-3:1/2:2");
-   });
-
-   it('not cyclic.', function() {
-     var task0 = new Task('task-0', []);
-     var task1 = new Task('task-1', []);
-     var task2 = new Task('task-2', [task0, task1]);
-     var task3 = new Task('task-3', [task2]);
-
-     task0._childs.push(task3);
-     task1._childs.push(task3);
-
-     var logs = [];
-     task3.forEachDescendant(function(each) {
-       var s = each.element.key+':'+each.index+'/'+each.count+':'+each.depth;
-       logs.push(s);
-     });
-
-     assert.equal(logs.length, 5);
-     assert.equal(logs[0], "task-2:0/1:1");
-     assert.equal(logs[1], "task-0:0/2:2");
-     assert.equal(logs[2], "task-3:0/1:3");
-     assert.equal(logs[3], "task-1:1/2:2");
-     assert.equal(logs[4], "task-3:0/1:3");
-   });
-
-  });
-
-  describe('#forEachTreeNode', function() {
-
-   it('no child.', function() {
-     var task = new Task('task-0', []);
-
-     var logs = [];
-
-     task.forEachTreeNode(function(each) {
-       var s = each.element.key+':'+each.index+'/'+each.count+':'+each.depth;
-       logs.push(s);
-     });
-     assert.equal(logs.length, 1);
-     assert.equal(logs[0], "task-0:0/1:0");
-   });
-
-   it('has children.', function() {
-     var task0 = new Task('task-0', []);
-     var task1 = new Task('task-1', []);
-     var task2 = new Task('task-2', [task0, task1]);
-
-     var logs = [];
-
-     task2.forEachTreeNode(function(each) {
-       var s = each.element.key + ':' + each.index + '/' + each.count +
-         ':' + each.depth;
-       logs.push(s);
-     });
-
-     assert.equal(logs.length, 3);
-     assert.equal(logs[0], "task-2:0/1:0");
-     assert.equal(logs[1], "task-0:0/2:1");
-     assert.equal(logs[2], "task-1:1/2:1");
-   });
-
-   it('has grandchildren.', function() {
-     var task0 = new Task('task-0', []);
-     var task1 = new Task('task-1', []);
-     var task2 = new Task('task-2', [task0, task1]);
-     var task3 = new Task('task-3', []);
-     var task4 = new Task('task-4', []);
-     var task5 = new Task('task-5', [task4, task3]);
-     var task6 = new Task('task-6', [task2, task5]);
-
-     var logs = [];
-
-     task6.forEachTreeNode(function(each) {
-       var s = each.element.key + ':' + each.index + '/' + each.count +
-         ':' + each.depth;
-       logs.push(s);
-     });
-
-     assert.equal(logs.length, 7);
-     assert.equal(logs[0], "task-6:0/1:0");
-     assert.equal(logs[1], "task-2:0/2:1");
-     assert.equal(logs[2], "task-0:0/2:2");
-     assert.equal(logs[3], "task-1:1/2:2");
-     assert.equal(logs[4], "task-5:1/2:1");
-     assert.equal(logs[5], "task-4:0/2:2");
-     assert.equal(logs[6], "task-3:1/2:2");
-   });
-
-   it('not cyclic.', function() {
-     var task0 = new Task('task-0', []);
-     var task1 = new Task('task-1', []);
-     var task2 = new Task('task-2', [task0, task1]);
-     var task3 = new Task('task-3', [task2]);
-
-     task0._childs.push(task3);
-     task1._childs.push(task3);
-
-     var logs = [];
-
-     task3.forEachTreeNode(function(each) {
-       var s = each.element.key + ':' + each.index + '/' + each.count +
-         ':' + each.depth;
-       logs.push(s);
-     });
-
-     assert.equal(logs.length, 4);
-     assert.equal(logs[0], "task-3:0/1:0");
-     assert.equal(logs[1], "task-2:0/1:1");
-     assert.equal(logs[2], "task-0:0/2:2");
-     assert.equal(logs[3], "task-1:1/2:2");
-   });
-
-  });
-
-});
+'use strict'
+
+const Task = require('tasker/src/task.js')
+const assert = require('assert')
+
+describe('Test of Task', () => {
+  describe('Constructor', () => {
+    it('no arguments.', () => {
+      let task = new Task()
+      assert.equal(task.key, null)
+      assert.equal(task._childs, null)
+      assert.equal(task.filename, null)
+      assert.equal(task.lineno, null)
+      assert.equal(task._defined[0], 0)
+    })
+
+    it('no child, no filename, no lineno.', () => {
+      let task = new Task('task-0')
+      assert.equal(task.key, 'task-0')
+      assert.equal(task._childs, null)
+      assert.equal(task.filename, null)
+      assert.equal(task.lineno, null)
+      assert.equal(task._defined[0], 0)
+    })
+
+    it('full arguments, but childs is empty.', () => {
+      let task = new Task('task-0', [], 'aaa', 10)
+      assert.equal(task.key, 'task-0')
+      assert.equal(task._childs.length, 0)
+      assert.equal(task.filename, 'aaa')
+      assert.equal(task.lineno, 10)
+      assert.equal(task._defined[0], 0)
+    })
+
+    it('full arguments, and childs is not empty.', () => {
+      let obj1 = {}
+      let obj2 = {}
+      let task = new Task('task-0', [obj1, obj2], 'aaa', 10)
+      assert.equal(task.key, 'task-0')
+      assert.equal(task._childs.length, 2)
+      assert.equal(task._childs[0], obj1)
+      assert.equal(task._childs[1], obj2)
+      assert.equal(task.filename, 'aaa')
+      assert.equal(task.lineno, 10)
+      assert.equal(task._defined[0], 0)
+    })
+
+    it('key is not a string', () => {
+      let fn = () => 'a function'
+      let task = new Task(fn, [], 'aaa', 10)
+      assert.equal(task.key, fn)
+      assert.equal(task._childs.length, 0)
+      assert.equal(task.filename, 'aaa')
+      assert.equal(task.lineno, 10)
+      assert.equal(task._defined[0], 0)
+
+      function fn2 () { return 'function 2' }
+      task = new Task(fn2, [], 'aaa', 10)
+      assert.equal(task.key, fn2)
+      assert.equal(task._childs.length, 0)
+      assert.equal(task.filename, 'aaa')
+      assert.equal(task.lineno, 10)
+      assert.equal(task._defined[0], 0)
+    })
+  })
+
+  describe('Copy constructor', () => {
+    it('no child, no filename, no lineno.', () => {
+      let task0 = new Task('task-0')
+
+      let task1 = new Task(task0)
+      assert.equal(task1.key, 'task-0')
+      assert.equal(task1._childs, null)
+      assert.equal(task1.filename, null)
+      assert.equal(task1.lineno, null)
+      assert.equal(task1._defined[0], 1)
+
+      assert.equal(task0._defined[0], 1)
+
+      let task2 = new Task(task0)
+      assert.equal(task2.key, 'task-0')
+      assert.equal(task2._childs, null)
+      assert.equal(task2.filename, null)
+      assert.equal(task2.lineno, null)
+      assert.equal(task2._defined[0], 2)
+
+      assert.equal(task1._defined[0], 2)
+      assert.equal(task0._defined[0], 2)
+    })
+
+    it('full arguments, but childs is empty.', () => {
+      let obj1 = {}
+      let task0 = new Task('task-0', [obj1], 'aaa', 10)
+
+      let task1 = new Task(task0, [], 'bbb', 20)
+      assert.equal(task1.key, 'task-0')
+      assert.equal(task1._childs.length, 0)
+      assert.equal(task1.filename, 'bbb')
+      assert.equal(task1.lineno, 20)
+      assert.equal(task1._defined[0], 1)
+
+      assert.equal(task0._defined[0], 1)
+
+      let task2 = new Task(task0, [], 'ccc', 30)
+      assert.equal(task2.key, 'task-0')
+      assert.equal(task2._childs.length, 0)
+      assert.equal(task2.filename, 'ccc')
+      assert.equal(task2.lineno, 30)
+      assert.equal(task2._defined[0], 2)
+
+      assert.equal(task1._defined[0], 2)
+      assert.equal(task0._defined[0], 2)
+    })
+
+    it('full arguments, but childs is empty.', () => {
+      let obj0 = {}
+      let task0 = new Task('task-0', [obj0], 'aaa', 10)
+
+      let obj1 = {}
+      let obj11 = {}
+      let task1 = new Task(task0, [obj1, obj11], 'bbb', 20)
+      assert.equal(task1.key, 'task-0')
+      assert.equal(task1._childs.length, 2)
+      assert.equal(task1._childs[0], obj1)
+      assert.equal(task1._childs[1], obj11)
+      assert.equal(task1.filename, 'bbb')
+      assert.equal(task1.lineno, 20)
+      assert.equal(task1._defined[0], 1)
+
+      assert.equal(task0._defined[0], 1)
+
+      let obj2 = {}
+      let task2 = new Task(task0, [obj2], 'ccc', 30)
+      assert.equal(task2.key, 'task-0')
+      assert.equal(task2._childs.length, 1)
+      assert.equal(task2._childs[0], obj2)
+      assert.equal(task2.filename, 'ccc')
+      assert.equal(task2.lineno, 30)
+      assert.equal(task2._defined[0], 2)
+
+      assert.equal(task1._defined[0], 2)
+      assert.equal(task0._defined[0], 2)
+    })
+
+    it('key is not a string.', () => {
+      let fn0 = () => {}
+      let obj0 = {}
+      let task0 = new Task(fn0, [obj0], 'aaa', 10)
+
+      let obj1 = {}
+      let obj11 = {}
+      let task1 = new Task(task0, [obj1, obj11], 'bbb', 20)
+      assert.equal(task1.key, fn0)
+      assert.equal(task1._childs.length, 2)
+      assert.equal(task1._childs[0], obj1)
+      assert.equal(task1._childs[1], obj11)
+      assert.equal(task1.filename, 'bbb')
+      assert.equal(task1.lineno, 20)
+      assert.equal(task1._defined[0], 1)
+
+      assert.equal(task0._defined[0], 1)
+
+      let obj2 = {}
+      let task2 = new Task(task0, [obj2], 'ccc', 30)
+      assert.equal(task2.key, fn0)
+      assert.equal(task2._childs.length, 1)
+      assert.equal(task2._childs[0], obj2)
+      assert.equal(task2.filename, 'ccc')
+      assert.equal(task2.lineno, 30)
+      assert.equal(task2._defined[0], 2)
+
+      assert.equal(task1._defined[0], 2)
+      assert.equal(task0._defined[0], 2)
+    })
+  })
+
+  describe('#forEachChild', () => {
+    it('no child.', () => {
+      let task = new Task('task-0', [])
+      task.forEachChild(each => {
+        assert.ok(false)
+      })
+      assert.ok(true)
+    })
+
+    it('has children.', () => {
+      let task0 = new Task('task-0', [])
+      let task1 = new Task('task-1', [])
+      let task2 = new Task('task-2', [task1, task0])
+
+      let logs = []
+      task2.forEachChild(each => {
+        let s = `${each.element.key}:${each.index}/${each.count}`
+        logs.push(s)
+      })
+      assert.equal(logs.length, 2)
+      assert.equal(logs[0], 'task-1:0/2')
+      assert.equal(logs[1], 'task-0:1/2')
+    })
+
+    it('no grandchild is listed.', () => {
+      let task0 = new Task('task-0', [])
+      let task1 = new Task('task-1', [task0])
+      let task2 = new Task('task-2', [task1])
+
+      let logs = []
+      task2.forEachChild(each => {
+        let s = `${each.element.key}:${each.index}/${each.count}`
+        logs.push(s)
+      })
+      assert.equal(logs.length, 1)
+      assert.equal(logs[0], 'task-1:0/1')
+    })
+  })
+
+  describe('#forEachDescendant', () => {
+    it('no child.', () => {
+      let task = new Task('task-0', [])
+      task.forEachDescendant(() => {
+        assert.ok(false)
+      })
+      assert.ok(true)
+    })
+
+    it('has children.', () => {
+      let task0 = new Task('task-0', [])
+      let task1 = new Task('task-1', [])
+      let task2 = new Task('task-2', [task0, task1])
+      let logs = []
+      task2.forEachDescendant(each => {
+        let s = `${each.element.key}:${each.index}/${each.count}:${each.depth}`
+        logs.push(s)
+      })
+      assert.equal(logs.length, 2)
+      assert.equal(logs[0], 'task-0:0/2:1', logs[0])
+      assert.equal(logs[1], 'task-1:1/2:1', logs[1])
+    })
+
+    it('has grandchildren.', () => {
+      let task0 = new Task('task-0', [])
+      let task1 = new Task('task-1', [])
+      let task2 = new Task('task-2', [task0, task1])
+      let task3 = new Task('task-3', [])
+      let task4 = new Task('task-4', [])
+      let task5 = new Task('task-5', [task4, task3])
+      let task6 = new Task('task-6', [task2, task5])
+
+      let logs = []
+      task6.forEachDescendant(each => {
+        let s = `${each.element.key}:${each.index}/${each.count}:${each.depth}`
+        logs.push(s)
+      })
+
+      assert.equal(logs.length, 6)
+      assert.equal(logs[0], 'task-2:0/2:1')
+      assert.equal(logs[1], 'task-0:0/2:2')
+      assert.equal(logs[2], 'task-1:1/2:2')
+      assert.equal(logs[3], 'task-5:1/2:1')
+      assert.equal(logs[4], 'task-4:0/2:2')
+      assert.equal(logs[5], 'task-3:1/2:2')
+    })
+
+    it('not cyclic.', () => {
+      let task0 = new Task('task-0', [])
+      let task1 = new Task('task-1', [])
+      let task2 = new Task('task-2', [task0, task1])
+      let task3 = new Task('task-3', [task2])
+
+      task0._childs.push(task3)
+      task1._childs.push(task3)
+
+      let logs = []
+      task3.forEachDescendant(each => {
+        let s = `${each.element.key}:${each.index}/${each.count}:${each.depth}`
+        logs.push(s)
+      })
+
+      assert.equal(logs.length, 5)
+      assert.equal(logs[0], 'task-2:0/1:1')
+      assert.equal(logs[1], 'task-0:0/2:2')
+      assert.equal(logs[2], 'task-3:0/1:3')
+      assert.equal(logs[3], 'task-1:1/2:2')
+      assert.equal(logs[4], 'task-3:0/1:3')
+    })
+  })
+
+  describe('#forEachTreeNode', () => {
+    it('no child.', () => {
+      let task = new Task('task-0', [])
+
+      let logs = []
+
+      task.forEachTreeNode(each => {
+        let s = `${each.element.key}:${each.index}/${each.count}:${each.depth}`
+        logs.push(s)
+      })
+      assert.equal(logs.length, 1)
+      assert.equal(logs[0], 'task-0:0/1:0')
+    })
+
+    it('has children.', () => {
+      let task0 = new Task('task-0', [])
+      let task1 = new Task('task-1', [])
+      let task2 = new Task('task-2', [task0, task1])
+
+      let logs = []
+
+      task2.forEachTreeNode(each => {
+        let s = `${each.element.key}:${each.index}/${each.count}:${each.depth}`
+        logs.push(s)
+      })
+
+      assert.equal(logs.length, 3)
+      assert.equal(logs[0], 'task-2:0/1:0')
+      assert.equal(logs[1], 'task-0:0/2:1')
+      assert.equal(logs[2], 'task-1:1/2:1')
+    })
+
+    it('has grandchildren.', () => {
+      let task0 = new Task('task-0', [])
+      let task1 = new Task('task-1', [])
+      let task2 = new Task('task-2', [task0, task1])
+      let task3 = new Task('task-3', [])
+      let task4 = new Task('task-4', [])
+      let task5 = new Task('task-5', [task4, task3])
+      let task6 = new Task('task-6', [task2, task5])
+
+      let logs = []
+
+      task6.forEachTreeNode(each => {
+        let s = `${each.element.key}:${each.index}/${each.count}:${each.depth}`
+        logs.push(s)
+      })
+
+      assert.equal(logs.length, 7)
+      assert.equal(logs[0], 'task-6:0/1:0')
+      assert.equal(logs[1], 'task-2:0/2:1')
+      assert.equal(logs[2], 'task-0:0/2:2')
+      assert.equal(logs[3], 'task-1:1/2:2')
+      assert.equal(logs[4], 'task-5:1/2:1')
+      assert.equal(logs[5], 'task-4:0/2:2')
+      assert.equal(logs[6], 'task-3:1/2:2')
+    })
+
+    it('not cyclic.', () => {
+      let task0 = new Task('task-0', [])
+      let task1 = new Task('task-1', [])
+      let task2 = new Task('task-2', [task0, task1])
+      let task3 = new Task('task-3', [task2])
+
+      task0._childs.push(task3)
+      task1._childs.push(task3)
+
+      let logs = []
+
+      task3.forEachTreeNode(each => {
+        let s = `${each.element.key}:${each.index}/${each.count}:${each.depth}`
+        logs.push(s)
+      })
+
+      assert.equal(logs.length, 4)
+      assert.equal(logs[0], 'task-3:0/1:0')
+      assert.equal(logs[1], 'task-2:0/1:1')
+      assert.equal(logs[2], 'task-0:0/2:2')
+      assert.equal(logs[3], 'task-1:1/2:2')
+    })
+  })
+})
